@@ -3,13 +3,13 @@
 //
 //   node scripts/publish-all.mjs [--dry-run] [--otp <code>] [--tag <dist-tag>] [--only <name> ...]
 //
-// npm requires a one-time password on every publish (2FA auth-and-writes).
-// Pass --otp, or let the script prompt once and reuse it; when the code
-// expires mid-run the script prompts again and retries the failed package.
+// npm runs a web-2FA ceremony per publish for passkey/biometric accounts.
+// stdio is inherited so npm can open the browser itself: approve the first
+// ceremony and check npmjs.com's "don't ask again for 5 minutes" box — the
+// rest of the batch then passes without further prompts. `npm login` first.
 import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { spawnSync } from 'node:child_process'
-import readline from 'node:readline/promises'
 
 const argv = process.argv.slice(2)
 const flag = name => {
@@ -17,6 +17,7 @@ const flag = name => {
   return i === -1 ? undefined : argv[i + 1]
 }
 const dryRun = argv.includes('--dry-run')
+const otp = flag('--otp')
 const tag = flag('--tag')
 const only = argv.includes('--only') ? argv.slice(argv.indexOf('--only') + 1).filter(a => !a.startsWith('--')) : null
 
@@ -38,56 +39,34 @@ if (!dryRun) {
     console.error('npm whoami failed — run `npm login` first.')
     process.exit(1)
   }
-  console.log(`publishing as npm user: ${who.stdout.trim()}`)
+  console.log(`publishing as npm user: ${who.stdout.trim()}\n`)
 }
 
-async function askOtp(reason) {
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
-  try {
-    return (await rl.question(`npm OTP ${reason}: `)).trim()
-  } finally {
-    rl.close()
-  }
-}
-
-function publish(dir, otp) {
-  const args = ['publish', '--access', 'public']
-  if (dryRun) args.push('--dry-run')
-  if (tag !== undefined) args.push('--tag', tag)
-  if (otp) args.push('--otp', otp)
-  return spawnSync('npm', args, { cwd: join(pluginsDir, dir), encoding: 'utf8' })
-}
-
-const isOtpError = run => /EOTP|one-time password/i.test(`${run.stderr}\n${run.stdout}`)
-const isAlreadyPublished = run => /EPUBLISHCONFLICT|cannot publish over/i.test(`${run.stderr}\n${run.stdout}`)
-
-let otp = dryRun ? undefined : (flag('--otp') ?? (await askOtp('(authenticator code; reused while valid):')))
 const results = []
 for (const dir of packages) {
   const pkg = JSON.parse(readFileSync(join(pluginsDir, dir, 'package.json'), 'utf8'))
-  if (pkg.name !== `@dbydd/${dir}`) {
-    results.push({ dir, status: 'skip', detail: `name mismatch: ${pkg.name}` })
+  if (pkg.name !== `@dbydd/${dir}` || pkg.private === true) {
+    results.push({ dir, status: 'skip', detail: 'name mismatch or private' })
     continue
   }
-  if (pkg.private === true) {
-    results.push({ dir, status: 'skip', detail: 'package is private' })
-    continue
-  }
-  let run = publish(dir, otp)
-  if (run.status !== 0 && isOtpError(run)) {
-    otp = await askOtp('(the previous code expired — enter a fresh one):')
-    run = publish(dir, otp)
-  }
-  const output = `${run.stderr}\n${run.stdout}`.trim()
+  const args = ['publish', '--access', 'public']
+  if (dryRun) args.push('--dry-run')
+  if (tag !== undefined) args.push('--tag', tag)
+  if (otp !== undefined) args.push('--otp', otp)
+  const run = spawnSync('npm', args, {
+    cwd: join(pluginsDir, dir),
+    stdio: dryRun ? ['ignore', 'ignore', 'pipe'] : 'inherit',
+    encoding: 'utf8',
+  })
   if (run.status === 0) {
     results.push({ dir, status: 'published', detail: `${pkg.name}@${pkg.version}` })
-  } else if (isAlreadyPublished(run)) {
-    results.push({ dir, status: 'skip', detail: `${pkg.name}@${pkg.version} already on npm` })
   } else {
-    results.push({ dir, status: 'failed', detail: output.split('\n').filter(l => l.includes('error')).slice(0, 3).join(' | ') || output.split('\n').slice(-3).join(' | ') })
+    const detail = dryRun ? (run.stderr || '').trim().split('\n').slice(-2).join(' | ') : 'see npm output above — rerun with --only ' + dir
+    results.push({ dir, status: 'failed', detail })
   }
 }
 
+console.log('')
 for (const r of results) console.log(`${r.status.padEnd(9)} ${r.dir}  ${r.detail}`)
 const failed = results.filter(r => r.status === 'failed')
 console.log(`\n${results.length - failed.length}/${results.length} ok${failed.length === 0 ? '' : `, ${failed.length} failed — rerun with --only <name> for the failures`}`)
