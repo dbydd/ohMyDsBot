@@ -42,23 +42,11 @@ dsh --profile omd --no-open                              # Web UI 默认 http://
 | `docs/` | 设计说明与实施计划 |
 | `design/` | Quint / VDM-SL / LikeC4 形式化模型 |
 | `archived/` | Lean 验证实验与退役 profile（`archived/retired-profiles/`） |
-| `scripts/` | `publish-all.mjs`（npm 发布）、`path`（内部路径 CLI）等 |
-
-## 发布插件
-
-插件以 TS 源码直发（dsh 用 tsx 加载，无需构建产物）。npm 2FA 需要交互，由维护者手动执行：
-
-```sh
-npm login                       # 一次性
-node scripts/publish-all.mjs --dry-run   # 预览
-node scripts/publish-all.mjs    # 全量发布；失败可 --only <name> 重试
-```
-
-脚本会跳过 `private` 包并校验包名与 scope。宿主运行时（`@deepseek-ai/*`）只出现在 `peerDependencies` + `devDependencies`，由 dsh 宿主提供，避免双副本。
+| `scripts/` | `path`（内部路径 CLI）等辅助脚本 |
 
 ## 开发
 
-插件加载、命名、注册与测试纪律见 [AGENTS.md](AGENTS.md)；各包的行为契约在包内 README 与 `docs/` 对应文档里。
+想自己写插件或改组合：插件加载、命名、注册与测试纪律见 [AGENTS.md](AGENTS.md)，各包的行为契约在包内 README 与 `docs/` 对应文档里。装本地改动用 `dsh plugin --profile omd add <插件目录>`，不必发 npm。
 
 ## 许可
 
