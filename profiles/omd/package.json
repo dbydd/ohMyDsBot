@@ -1,0 +1,43 @@
+{
+  "name": "dsh-profile-omd",
+  "private": true,
+  "description": "omd 组合的依赖清单：@dbydd/* 插件来自 npm，宿主运行时由 dsh 提供。恢复方式：dsh --profile omd 会按这份清单安装。",
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "@dbydd/omd-agents-live": "^0.1.0",
+    "@dbydd/omd-chat-shell": "^0.1.0",
+    "@dbydd/omd-context-tavern": "^0.1.0",
+    "@dbydd/omd-internal-paths": "^0.1.0",
+    "@dbydd/omd-judgment": "^0.1.0",
+    "@dbydd/omd-lsp-writethrough": "^0.1.0",
+    "@dbydd/omd-project-config": "^0.1.0",
+    "@dbydd/omd-read": "^0.1.0",
+    "@dbydd/omd-roles": "^0.1.0",
+    "@dbydd/omd-skill-catalog": "^0.1.0",
+    "@dbydd/omd-skin": "^0.1.0",
+    "@dbydd/omd-status-ticker": "^0.1.0",
+    "@dbydd/omd-table-chart": "^0.1.0",
+    "@dbydd/omd-task": "^0.1.0",
+    "@dbydd/omd-todo": "^0.1.0",
+    "@dbydd/omd-todo-driver": "^0.1.0",
+    "@dbydd/omd-tools-policy": "^0.1.0",
+    "@dbydd/omd-ttsr": "^0.1.0",
+    "@dbydd/omd-visual": "^0.1.0",
+    "@dbydd/omd-workbench": "^0.1.0",
+    "@dbydd/omd-worktree-alloc": "^0.1.0",
+    "dsh-motion-ui": "0.8.9",
+    "dsh-tool-lsp": "^0.1.2"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "dsh-motion-ui",
+        "@deepseek-ai/dsh-experimental-inspector-profile",
+        "@dbydd/omd-internal-paths"
+      ],
+      "patchReload": "live"
+    }
+  }
+}

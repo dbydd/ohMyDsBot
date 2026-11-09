@@ -1,0 +1,5 @@
+# omd-internal-tools — judge-routed tools over internal paths, mounted after
+# omd-internal-paths so the path service exists at apply time.
+- insert:
+    - id: omd-internal-tools
+      name: omd-internal-tools

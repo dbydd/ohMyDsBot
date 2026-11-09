@@ -1,0 +1,10 @@
+# omd-web-providers — registered web providers. Inserted by the Loader when
+# this package enters a profile's bundle list; no manual profile row needed.
+- insert:
+    - id: omd-web-providers
+      name: omd-web-providers
+- id: web
+  name: '@deepseek-ai/dsh-web'
+  config:
+    searchProvider: omd-auto
+    fetchProvider: omd-auto-fetch

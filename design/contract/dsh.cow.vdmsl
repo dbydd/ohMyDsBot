@@ -1,0 +1,42 @@
+-- COW 工作区分配器这个盒子：基于轻量 COW 原生快照管理无 Git 隔离工作区。
+-- 只写分配、差异比对与释放端口在数据上的前后条件；任务执行与生命周期的跨盒子先后由接线持有。
+-- 精度停在“工作区按分支身份绑定基线”：文件系统底层块寻址与 Diff 文本的具体格式保持不透明。
+module dsh_cow
+exports
+  types
+    BranchId; Baseline; Patch
+  operations
+    allocate : BranchId * Baseline ==> ();
+    collect : BranchId ==> Patch;
+    release : BranchId ==> ()
+definitions
+types
+  BranchId = token;
+  Baseline = token;
+  Patch = token;
+
+state CowAlloc of
+  allocated : map BranchId to Baseline
+init s == s = mk_CowAlloc({|->})
+end
+
+operations
+-- REQ-9：分配一个无 Git 依赖的独立 COW 工作区；同一分支标识至多分配一次，杜绝静默覆盖。
+allocate(branch : BranchId, base : Baseline)
+ext wr allocated
+pre branch not in set dom allocated
+post allocated = allocated~ munion {branch |-> base};
+
+-- REQ-9：提取工作区相对于初始基线的变更差异；仅允许对当前处于活跃状态的工作区收集。
+collect(branch : BranchId) res : Patch
+ext rd allocated
+pre branch in set dom allocated
+post res = res;
+
+-- REQ-9：原子释放已分配的工作区并清空挂载；释放后该分支从活跃集合中移除，防止幽灵 diff 与资源泄露。
+release(branch : BranchId)
+ext wr allocated
+pre branch in set dom allocated
+post allocated = {branch} <-: allocated~;
+
+end dsh_cow

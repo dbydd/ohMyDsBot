@@ -1,0 +1,115 @@
+-- 世界书引擎这个盒子：持有世界书条目，按触发与预算决定激活集（深入点 B）。
+-- 换届时由 reseed 刷新纪元并重置条目库；装配器经 matchEntries 取得本回合激活的条目集合。
+-- 保证两条核心不变量：单条长度不超限（<= singleEntryMaxTokens），总占用严格不超预算上限（<= budgetCap）。
+module dsh_tavern_lorebook
+imports
+  from dsh_memory
+    types Epoch
+exports
+  types
+    EntryId; Key; Priority; Tokens
+  operations
+    reseed : dsh_memory`Epoch ==> ();
+    registerEntry : EntryId * set of Key * Priority * Tokens * bool ==> ();
+    matchEntries : set of Key * Tokens ==> set of EntryId
+definitions
+types
+  EntryId = token;
+  Key = token;
+  Priority = nat;
+  Tokens = nat;
+
+  -- 一条世界书定义：关键词集、优先级权重、预估占用 Token 数、单条上限、是否常驻（constant）。
+  Entry ::
+    id       : EntryId
+    keys     : set of Key
+    priority : Priority
+    cost     : Tokens
+    constant : bool
+  inv mk_Entry(-, -, -, cost, -) == cost > 0;
+
+state LorebookState of
+  epoch                : [dsh_memory`Epoch]
+  singleEntryMaxTokens : Tokens
+  catalog              : map EntryId to Entry
+  frozenConstants      : set of EntryId
+  activeSet            : set of EntryId
+inv mk_LorebookState(ep, maxEntry, cat, frozen, act) ==
+  maxEntry > 0 and
+  frozen subset dom cat and
+  act subset dom cat and
+  (forall id in set dom cat & cat(id).cost <= maxEntry) and
+  (ep = nil => (frozen = {} and act = {}))
+init s == s = mk_LorebookState(
+  nil,
+  1000,
+  {|->},
+  {},
+  {}
+)
+end
+
+functions
+  -- 计算一个条目集合的总 Token 开销。
+  sumTokens : set of EntryId * map EntryId to Entry -> Tokens
+  sumTokens(ids, cat) ==
+    if ids = {} then 0
+    else
+      let id in set ids in
+        cat(id).cost + sumTokens(ids \ {id}, cat)
+  pre ids subset dom cat
+  measure card ids;
+
+  -- 判断条目 a 是否在准入序上不劣于条目 c（常驻优先于非常驻；同级按 priority 降序）。
+  outRanksOrEqual : Entry * Entry -> bool
+  outRanksOrEqual(a, c) ==
+    if a.constant and not c.constant then true
+    elseif not a.constant and c.constant then false
+    else a.priority >= c.priority;
+
+  -- 计算本回合符合候选资格的条目 ID 集（常驻条目，或至少命中一个观测关键词的条目）。
+  eligibleIds : set of Key * map EntryId to Entry -> set of EntryId
+  eligibleIds(observedKeys, cat) ==
+    {id | id in set dom cat & cat(id).constant or (cat(id).keys inter observedKeys <> {})};
+
+  -- 偏序保真与预算贪心极大性检查：任何未入选的合法候选条目，不得优于已入选条目，且开销必定超出当前剩余预算。
+  isGreedyOptimal : set of EntryId * set of EntryId * Tokens * map EntryId to Entry -> bool
+  isGreedyOptimal(chosen, candidates, cap, cat) ==
+    forall c in set candidates \ chosen &
+      sumTokens(chosen, cat) + cat(c).cost > cap and
+      (forall a in set chosen & outRanksOrEqual(cat(a), cat(c)))
+  pre chosen subset dom cat and candidates subset dom cat;
+
+operations
+  -- REQ-2：纪元换届，重播种绑定新的纪元，重置动态激活集，常驻条目继续保留。
+  reseed(e : dsh_memory`Epoch)
+  ext wr epoch, frozenConstants, activeSet
+      rd catalog
+  post epoch = e and
+       frozenConstants = {id | id in set dom catalog & catalog(id).constant} and
+       activeSet = {id | id in set dom catalog & catalog(id).constant};
+
+  -- REQ-8：注册或从 GUI 暂存一条世界书条目（当前纪元内只写 catalog，不污染 frozenConstants，保护已冻结前缀）。
+  registerEntry(id : EntryId, keys : set of Key, prio : Priority, cost : Tokens, isConstant : bool)
+  ext wr catalog
+      rd singleEntryMaxTokens
+  pre id not in set dom catalog and cost > 0 and cost <= singleEntryMaxTokens
+  post catalog = catalog~ munion {id |-> mk_Entry(id, keys, prio, cost, isConstant)};
+
+  -- REQ-3/REQ-4：扫描输入包含的关键词，在给定总预算上限内计算出最大合规激活集。
+  matchEntries(observedKeys : set of Key, budgetCap : Tokens) res : set of EntryId
+  ext wr activeSet
+      rd epoch, catalog
+  pre epoch <> nil and budgetCap > 0
+  post
+    -- 1. 结果必须来自已知目录且属于本轮合法候选集（常驻或命中关键词）
+    res subset dom catalog and
+    res subset eligibleIds(observedKeys, catalog) and
+    -- 2. 严格守住 Token 预算上限（REQ-4 核心不变量）
+    sumTokens(res, catalog) <= budgetCap and
+    -- 3. 偏序保真与贪心极大性（排除空集平凡解与优先级倒挂）
+    isGreedyOptimal(res, eligibleIds(observedKeys, catalog), budgetCap, catalog) and
+    -- 4. 更新内部激活集状态
+    activeSet = res;
+
+end dsh_tavern_lorebook

@@ -1,0 +1,37 @@
+{
+  "name": "@dbydd/omd-tavern-assemble",
+  "version": "0.1.0",
+  "description": "Sends the context-tavern document into the model request: deterministic preselection, one batched judge round for secondary keys, lorebook prefix and Author's Note sections",
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/dsh-agent": "*",
+    "@deepseek-ai/dsh-session": "*",
+    "@deepseek-ai/dsh-system-prompt": "*",
+    "@deepseek-ai/schemastery": "*",
+    "@dbydd/omd-context-tavern": "^0.1.0",
+    "@dbydd/omd-judge-context": "^0.1.0"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/dsh-agent": "*",
+    "@deepseek-ai/dsh-session": "*",
+    "@deepseek-ai/dsh-system-prompt": "*",
+    "@deepseek-ai/schemastery": "*",
+    "@dbydd/omd-context-tavern": "^0.1.0",
+    "@dbydd/omd-judge-context": "^0.1.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dbydd/ohMyDsBot.git",
+    "directory": "plugins/omd-tavern-assemble"
+  }
+}

@@ -1,0 +1,167 @@
+specification {
+  element actor {
+    notation 'Person'
+    style {
+      shape person
+    }
+  }
+  element system {
+    notation 'Software System'
+  }
+  element container {
+    notation 'Container'
+  }
+  element component {
+    notation 'Component'
+  }
+
+  tag external
+  tag datastore
+  tag contract
+
+  deploymentNode host
+}
+
+model {
+  operator = actor 'Operator' {
+    description '与 Bot 对话并派发任务的人'
+  }
+
+  dsh = system 'DeepSeek Harness' {
+    description '承载 Bot 会话与插件的宿主运行时'
+
+    tavern = container 'Context Tavern' {
+      technology 'dsh plugin'
+      description '按纪元管理上下文并装配模型请求'
+
+      epoch = component 'Epoch Manager' {
+        description '监视换届请求，串行推进归档、反思、重播种与冻结'
+      }
+      lorebook = component 'Lorebook Engine' {
+        #contract
+        description '维护世界书条目的激活、触发与预算裁剪'
+      }
+      assembler = component 'Prompt Assembler' {
+        description '把冻结前缀、激活条目与线性历史装配成模型请求'
+      }
+      panel = component 'Tavern Panel' {
+        technology 'Web client module'
+        description '双模 Web 面板（DS-Bot 详情抽屉标签页 + Agent 侧栏浮层），展示纪元状态、暂存世界书条目与 Author Note、触发重播种'
+      }
+    }
+
+    dsbot = container 'DS-Bot Team' {
+      technology 'dsh plugin (submodule)'
+      description '承载长生命周期 Bot 名册、群聊房间、跨段切换（Handoff/Checkpoint）与右侧详情抽屉'
+    }
+
+    history = container 'History Store' {
+      #datastore #contract
+      technology 'Internal path source'
+      description '会话历史的纪元归档与只读取阅'
+    }
+
+    memory = container 'Memory Engine' {
+      #contract
+      technology 'dsh plugin'
+      description '沉淀纪元事实与心智模型，并按需召回'
+    }
+
+    runner = container 'Sandbox Runner' {
+      technology 'dsh plugin'
+      description '调度沙箱生命周期、驱动 Agent 执行并作为 Onlyne 节点汇报结果'
+    }
+
+    cow = container 'COW Allocator' {
+      #contract
+      technology 'APFS / OVNFS provider'
+      description '基于轻量 COW 机制分配无 Git 隔离工作区、提取基线差异并原子释放'
+    }
+  }
+
+  gateway = system 'Model Gateway' {
+    #external
+    description '提供对话模型与判定模型推理的服务'
+  }
+
+  hindsight = system 'Memory Backend' {
+    #external
+    description 'Hindsight 记忆库服务'
+  }
+
+  sandboxVm = system 'Linux Desktop Sandbox' {
+    #external
+    description '原生 ARM64 隔离靶机（Debian 12 minimal），运行轻量虚拟桌面、受控浏览器与 AT-SPI 控制桥'
+  }
+
+  // 顶层
+  operator -> dsh '发起对话回合'
+  dsh -> gateway '请求模型推理'
+  dsh -> hindsight '读写记忆'
+  dsh -> sandboxVm '挂载工作区并派发执行指令'
+  operator -> sandboxVm '通过 noVNC 旁路监控并实时接管操作'
+
+  // dsh 容器层
+  operator -> dsh.tavern '发起对话回合与酒馆配置'
+  operator -> dsh.dsbot '管理 Bot 团队与打开详情抽屉'
+  operator -> dsh.runner '派发 Issue 编码或沙箱任务'
+  dsh.dsbot -> dsh.tavern '挂载详情抽屉 Tab 并同步段切换（Part Switch / Checkpoint）'
+  dsh.dsbot -> dsh.runner '委托执行沙箱子任务'
+  dsh.tavern -> dsh.history '归档并调阅会话历史'
+  dsh.tavern -> dsh.memory '沉淀与召回记忆'
+  dsh.tavern -> gateway '提交模型请求'
+  dsh.runner -> dsh.cow '分配隔离工作区与收集补丁'
+  dsh.runner -> sandboxVm '启动虚拟机、挂载工作区并驱动执行'
+  dsh.runner -> gateway '请求模型意图与推理决策'
+  dsh.memory -> gateway '调用判定模型'
+  dsh.memory -> hindsight '读写记忆库'
+
+  // tavern 组件层
+  operator -> dsh.tavern.assembler '提交对话指令'
+  operator -> dsh.tavern.panel '编辑世界书条目与手动触发重播种'
+  dsh.dsbot -> dsh.tavern.panel '通过 registerDetailsTab 挂载酒馆标签页'
+  dsh.dsbot -> dsh.tavern.epoch '通知段切换（switch / compact）并同步刷新记忆快照'
+  dsh.tavern.panel -> dsh.tavern.lorebook '注册/暂存世界书条目与读取激活状态'
+  dsh.tavern.panel -> dsh.tavern.epoch '手动请求纪元重播种'
+  dsh.tavern.assembler -> dsh.tavern.epoch '交出闭合回合的规模'
+  dsh.tavern.epoch -> dsh.history '归档纪元切片'
+  dsh.tavern.epoch -> dsh.memory '触发纪元反思'
+  dsh.tavern.epoch -> dsh.tavern.lorebook '触发世界书重播种'
+  dsh.tavern.assembler -> dsh.tavern.lorebook '读取激活条目'
+  dsh.tavern.assembler -> gateway '交付装配后的请求'
+}
+
+global {
+  styleGroup theme {
+    style element.tag = #external {
+      color muted
+      notation 'External Software System'
+    }
+    style element.tag = #datastore {
+      shape storage
+      notation 'Container: Data Store'
+    }
+  }
+}
+
+views {
+  global style theme
+
+  view index {
+    title 'DeepSeek Harness 系统上下文'
+    description 'DeepSeek Harness 为谁服务，又依赖哪些外部系统'
+    include *
+  }
+
+  view dshView of dsh {
+    title 'DeepSeek Harness 容器图'
+    description 'dsh 内的运行单元如何分工，并与哪些外部系统交互'
+    include *
+  }
+
+  view tavernView of dsh.tavern {
+    title 'Context Tavern 组件图'
+    description '上下文引擎内部如何围绕纪元换届协作'
+    include *
+  }
+}

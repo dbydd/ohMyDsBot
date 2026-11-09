@@ -1,0 +1,23 @@
+{
+  "name": "@dbydd/omd-chart-plan",
+  "version": "0.1.0",
+  "description": "Markdown table to chart plan: cell and column reading plus the deterministic kind cascade, as pure functions",
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./analyze": "./src/analyze.ts",
+    "./judge": "./src/judge.ts",
+    "./plan": "./src/plan.ts",
+    "./types": "./src/types.ts",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dbydd/ohMyDsBot.git",
+    "directory": "plugins/omd-chart-plan"
+  }
+}

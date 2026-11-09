@@ -1,0 +1,43 @@
+{
+  "name": "@dbydd/omd-todo-driver",
+  "version": "0.1.0",
+  "description": "Judge-gated todo continuation: one turn-stopping nudge when active work remains and the model is not waiting",
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/dsh-agent": "*",
+    "@deepseek-ai/dsh-jobs": "*",
+    "@deepseek-ai/dsh-llm": "*",
+    "@deepseek-ai/dsh-session": "*",
+    "@deepseek-ai/dsh-session-projection": "*",
+    "@deepseek-ai/dsh-user-questions": "*",
+    "@deepseek-ai/schemastery": "*",
+    "@dbydd/omd-judge-context": "^0.1.0",
+    "@dbydd/omd-todo": "^0.1.0"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/dsh-agent": "*",
+    "@deepseek-ai/dsh-jobs": "*",
+    "@deepseek-ai/dsh-llm": "*",
+    "@deepseek-ai/dsh-session": "*",
+    "@deepseek-ai/dsh-session-projection": "*",
+    "@deepseek-ai/dsh-user-questions": "*",
+    "@deepseek-ai/schemastery": "*",
+    "@dbydd/omd-judge-context": "^0.1.0",
+    "@dbydd/omd-todo": "^0.1.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dbydd/ohMyDsBot.git",
+    "directory": "plugins/omd-todo-driver"
+  }
+}

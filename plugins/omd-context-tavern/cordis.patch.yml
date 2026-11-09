@@ -1,0 +1,5 @@
+# omd-context-tavern — epoch bar, lorebook catalog and Author's Note editor as a
+# DS-Bot details tab and an Agent-mode sidebar overlay.
+- insert:
+    - id: omd-context-tavern
+      name: omd-context-tavern

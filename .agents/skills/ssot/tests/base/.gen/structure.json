@@ -1,0 +1,85 @@
+{
+  "generatedBy": "ssot gen",
+  "elements": [
+    {
+      "fqn": "shop",
+      "kind": "system",
+      "parent": null,
+      "children": [
+        "shop.api",
+        "shop.ledger"
+      ],
+      "tags": [],
+      "business": false,
+      "contract": null
+    },
+    {
+      "fqn": "shop.api",
+      "kind": "container",
+      "parent": "shop",
+      "children": [],
+      "tags": [
+        "business",
+        "contract"
+      ],
+      "business": true,
+      "contract": {
+        "module": "shop_api"
+      }
+    },
+    {
+      "fqn": "shop.ledger",
+      "kind": "container",
+      "parent": "shop",
+      "children": [],
+      "tags": [
+        "contract"
+      ],
+      "business": false,
+      "contract": {
+        "module": "shop_ledger"
+      }
+    },
+    {
+      "fqn": "user",
+      "kind": "actor",
+      "parent": null,
+      "children": [],
+      "tags": [],
+      "business": false,
+      "contract": null
+    }
+  ],
+  "relations": [
+    {
+      "source": "shop.api",
+      "target": "shop.ledger",
+      "title": "记下订单金额"
+    },
+    {
+      "source": "user",
+      "target": "shop.api",
+      "title": "下单"
+    }
+  ],
+  "views": [
+    {
+      "id": "index",
+      "of": null,
+      "nodes": [
+        "shop",
+        "user"
+      ]
+    },
+    {
+      "id": "shopLayer",
+      "of": "shop",
+      "nodes": [
+        "shop",
+        "shop.api",
+        "shop.ledger",
+        "user"
+      ]
+    }
+  ]
+}

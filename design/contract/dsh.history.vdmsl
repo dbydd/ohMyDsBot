@@ -1,0 +1,26 @@
+-- 会话历史这个盒子：把滑出实时窗口的对话切片按纪元归档，供日后只读取阅。
+-- 只写每个端口在数据上的前后条件；归档与换届各步的先后由 design/behavior 持有。
+-- 精度停在“切片按身份归档”：切片内容与纪元边界的位置保持不透明。
+module dsh_history
+exports
+  types
+    Slice
+operations
+  archive : Slice ==> ()
+definitions
+types
+  Slice = token;
+
+state Archive of
+  archived : set of Slice
+init s == s = mk_Archive({})
+end
+
+operations
+-- REQ-2：滑出实时窗口的历史切片在这里归档；同一份切片至多归档一次。
+archive(s : Slice)
+ext wr archived
+pre s not in set archived
+post archived = archived~ union {s};
+
+end dsh_history

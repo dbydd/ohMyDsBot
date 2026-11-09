@@ -1,0 +1,867 @@
+# omdw — oh-my-dsh web profile: dsh-base + omd-core + dsh-web-app + dsh-plugin.
+#
+# The `llm-pi-ai` block below is owned by Magpie: the gateway injects its model
+# roster into every dsh profile, so this file is regenerated state, not a place
+# to edit by hand. Capabilities live in the omd-core bundle instead.
+- id: llm-pi-ai # magpie
+  name: "@deepseek-ai/dsh-llm-pi-ai"
+  config:
+    providers:
+      magpie:
+        displayName: Magpie
+        apiKeyEnv: MAGPIE_GATEWAY_KEY
+        api: openai-completions
+        baseURL: http://127.0.0.1:3425/v1
+        models:
+          - id: group/supercheap
+            name: supercheap
+            contextWindow: 1048576
+            maxTokens: 262144
+            input: [text, image]
+            reasoningEfforts:
+              "off": none
+              minimal: minimal
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: group/generic-researcher-weak
+            name: generic-researcher-weak
+            contextWindow: 1048576
+            maxTokens: 262144
+            input: [text, image]
+            reasoningEfforts:
+              "off": none
+              minimal: minimal
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: group/generic-researcher-powerful
+            name: generic-researcher-powerful
+            contextWindow: 1048576
+            maxTokens: 262144
+            input: [text, image]
+            reasoningEfforts:
+              "off": none
+              minimal: minimal
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: group/generic-writer
+            name: generic-writer
+            contextWindow: 1048576
+            maxTokens: 262144
+            input: [text, image]
+            reasoningEfforts:
+              "off": none
+              minimal: minimal
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: group/flash-vibe
+            name: flash-vibe
+            contextWindow: 1048576
+            maxTokens: 262144
+            input: [text, image]
+            reasoningEfforts:
+              "off": none
+              minimal: minimal
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: group/finance-expert
+            name: finance-expert
+            contextWindow: 1048576
+            maxTokens: 262144
+            input: [text, image]
+            reasoningEfforts:
+              "off": none
+              minimal: minimal
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: group/free-lab
+            name: Free Lab
+            contextWindow: 1048576
+            maxTokens: 262144
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: group/stealthfree
+            name: stealthfree
+            contextWindow: 1048576
+            maxTokens: 262144
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              high: high
+          - id: group/nemotron-3-embed-1b
+            name: Nemotron Embed 1B
+          - id: group/nemotron-rerank-vl-1b-v2
+            name: Nemotron Rerank VL 1B
+            contextWindow: 10240
+            maxTokens: 2560
+            input: [text, image]
+          - id: group/deepseek-flash
+            name: DeepSeek Flash Latest
+            contextWindow: 1048576
+            maxTokens: 262144
+            input: [text, image]
+            reasoningEfforts:
+              high: high
+              max: max
+          - id: group/glm-5.3-flash
+            name: glm-5.3-flash · routing group
+            contextWindow: 1000000
+            maxTokens: 131072
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              high: high
+              max: max
+          - id: group/glm-5.3
+            name: GLM-5.3 · routing group
+            contextWindow: 1000000
+            maxTokens: 131072
+            reasoningEfforts:
+              low: low
+              high: high
+              max: max
+          - id: group/hy4-preview
+            name: Hy4 preview
+            contextWindow: 1000000
+            maxTokens: 64000
+            input: [text, image]
+            reasoningEfforts:
+              high: high
+          - id: group/gemini-3.8-flash
+            name: gemini 3.8 flash · routing group
+            contextWindow: 1048576
+            maxTokens: 65536
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+          - id: group/step-5-preview
+            name: Step 5 Preview
+            contextWindow: 1000000
+            maxTokens: 64000
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+          - id: group/longcat-2.5
+            name: Longcat 2.5
+            contextWindow: 1000000
+            maxTokens: 131072
+            input: [text, image]
+          - id: group/gemini-4-argon
+            name: Gemini 4 Argon · routing group
+            contextWindow: 1048576
+            maxTokens: 65536
+            input: [text, image]
+            reasoningEfforts:
+              minimal: minimal
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: group/labor
+            name: labor
+            contextWindow: 1048576
+            maxTokens: 262144
+            input: [text, image]
+            reasoningEfforts:
+              "off": none
+              minimal: minimal
+              low: low
+              medium: medium
+          - id: group/engineer
+            name: engineer
+            contextWindow: 1048576
+            maxTokens: 262144
+            input: [text, image]
+            reasoningEfforts:
+              minimal: minimal
+              low: low
+              medium: medium
+              high: high
+          - id: group/theorist
+            name: theorist
+            contextWindow: 1048576
+            maxTokens: 262144
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+          - id: group/philosopher
+            name: philosopher
+            contextWindow: 1048576
+            maxTokens: 262144
+            input: [text, image]
+            reasoningEfforts:
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: group/fusion-deepthink
+            name: fusion-deepthink
+            contextWindow: 1048576
+            maxTokens: 262144
+            input: [text, image]
+            reasoningEfforts:
+              "off": none
+              minimal: minimal
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: group/fusion-worker
+            name: fusion-worker
+            contextWindow: 1048576
+            maxTokens: 262144
+            input: [text, image]
+            reasoningEfforts:
+              "off": none
+              minimal: minimal
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: group/fusion-hierarchical
+            name: fusion-hierarchical
+            contextWindow: 1048576
+            maxTokens: 262144
+            input: [text, image]
+            reasoningEfforts:
+              "off": none
+              minimal: minimal
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: group/fusion-flattened
+            name: fusion-flattened
+            contextWindow: 1048576
+            maxTokens: 262144
+            input: [text, image]
+            reasoningEfforts:
+              "off": none
+              minimal: minimal
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: group/lab-manager
+            name: Lab Manager
+            contextWindow: 1048576
+            maxTokens: 262144
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: opencode-zen/beam-free
+            name: Beam Free · OpenCode Zen
+            contextWindow: 1048576
+            maxTokens: 131072
+            input: [text]
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: opencode-zen/mimo-v2.6-flash-free
+            name: MiMo-V2.6-Flash Free
+            contextWindow: 200000
+            maxTokens: 32000
+            input: [text, image]
+          - id: opencode-zen/nemotron-3.5-super-vl-free
+            name: Nemotron 3.5 Super VL Free
+            contextWindow: 1048576
+            maxTokens: 131072
+            input: [text, image]
+            reasoningEfforts:
+              "off": none
+              minimal: minimal
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+          - id: opencode-zen/nemotron-3.5-lightning-free
+            name: Nemotron 3.5 Lightning Free · OpenCode Zen
+            contextWindow: 262144
+            maxTokens: 65536
+            input: [text]
+          - id: opencode-zen/longcat-2.5-preview-free
+            name: LongCat 2.5 Preview Free · OpenCode Zen
+            contextWindow: 1000000
+            maxTokens: 131072
+            input: [text, image]
+          - id: opencode-zen/deepseek-v4.1-flash-free
+            name: DeepSeek V4.1 Flash Free
+            contextWindow: 200000
+            maxTokens: 32000
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              high: high
+              max: max
+          - id: opencode-zen/glm-5.3-flash-free
+            name: GLM-5.3-Flash Free
+            contextWindow: 200000
+            maxTokens: 32000
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              high: high
+              max: max
+          - id: opencode-zen/minimax-m3.1-flash-free
+            name: MiniMax M3.1 Flash Free · OpenCode Zen
+            contextWindow: 1000000
+            maxTokens: 250000
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: opencode-go/deepseek-v4.1-flash
+            name: DeepSeek V4.1 Flash · OpenCode Go
+            contextWindow: 1000000
+            maxTokens: 250000
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              high: high
+              max: max
+          - id: opencode-go/gemini-4-argon-contributor
+            name: Gemini 4 Argon Contributor
+            contextWindow: 1048576
+            maxTokens: 65536
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+          - id: opencode-go/longcat-2.5-preview-free
+            name: LongCat 2.5 Preview Free · OpenCode Go
+            contextWindow: 1000000
+            maxTokens: 131072
+            input: [text, image]
+          - id: opencode-go/beam-free
+            name: Beam Free · OpenCode Go
+            contextWindow: 1048576
+            maxTokens: 131072
+            input: [text]
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: opencode-go/minimax-m3.1-flash-free
+            name: MiniMax M3.1 Flash Free · OpenCode Go
+            contextWindow: 1000000
+            maxTokens: 250000
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: workbuddy/hy3
+            name: Hy3
+            contextWindow: 192000
+            maxTokens: 48000
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              high: high
+          - id: workbuddy/hy3-x
+            name: Hy3 (X)
+            contextWindow: 192000
+            maxTokens: 48000
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              high: high
+          - id: workbuddy/step-5-preview
+            name: Step-5-Preview
+            contextWindow: 1000000
+            maxTokens: 64000
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+          - id: workbuddy/glm-5.3-flash
+            name: GLM-5.3-Flash · WorkBuddy
+            contextWindow: 1000000
+            maxTokens: 131072
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              high: high
+              max: max
+          - id: shailab/intern-latest
+            name: intern-latest
+          - id: shailab/intern-s2
+            name: intern-s2
+          - id: shailab/intern-s2-preview-397b
+            name: intern-s2-preview-397b
+          - id: shailab/intern-s2-preview
+            name: intern-s2-preview
+          - id: shailab/intern-s2-preview-35b
+            name: intern-s2-preview-35b
+          - id: shailab/intern-s1-pro
+            name: intern-s1-pro
+          - id: shailab/intern-s1
+            name: intern-s1
+          - id: shailab/intern-s1-mini
+            name: intern-s1-mini
+          - id: shailab/internvl-latest
+            name: internvl-latest
+          - id: shailab/internvl3.5-latest
+            name: internvl3.5-latest
+          - id: shailab/internvl3.5-241b-a28b
+            name: internvl3.5-241b-a28b
+          - id: shailab-freemodels/Agents-A1
+            name: Agents-A1
+            contextWindow: 262000
+            maxTokens: 65500
+            input: [text, image]
+          - id: shailab-freemodels/glm-5.3
+            name: GLM-5.3 · shailab-freemodels
+            contextWindow: 1000000
+            maxTokens: 131072
+            reasoningEfforts:
+              low: low
+              high: high
+              max: max
+          - id: shailab-freemodels/intern-s2
+            name: 书生-S2
+          - id: shailab-freemodels/kimi-k2.6
+            name: Kimi-K2.6
+            contextWindow: 262144
+            maxTokens: 65536
+            input: [text, image]
+          - id: shailab-freemodels/minimax-m3
+            name: MiniMax-M3
+            contextWindow: 1048576
+            maxTokens: 262144
+            input: [text, image]
+          - id: shailab-freemodels/qwen3.8-27b
+            name: Qwen3.8-27B
+            contextWindow: 262144
+            maxTokens: 32768
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              medium: medium
+              xhigh: xhigh
+          - id: shailab-freemodels/Sage-A1.5
+            name: Sage-A1.5
+          - id: shailab-freemodels/Atria-Dawn
+            name: Atria-Dawn
+          - id: shailab-freemodels/deepseek-v4.1-flash-1017
+            name: DeepSeek-V4.1-Flash-1017
+            contextWindow: 1048576
+            maxTokens: 262144
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              high: high
+              max: max
+          - id: onprs/gemini-3.8-flash
+            name: Gemini 3.8 Flash · OnPrs
+            contextWindow: 1048576
+            maxTokens: 65536
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+          - id: onprs/deepseek/deepseek-v4.1-flash
+            name: deepseek/deepseek-v4.1-flash
+            contextWindow: 1048576
+            maxTokens: 262144
+            input: [text]
+          - id: onprs/meta/muse-spark-1.3-contributor
+            name: meta/muse-spark-1.3-contributor
+            contextWindow: 1048576
+            maxTokens: 131072
+            input: [text]
+          - id: shuaiapi-gemini/gemini-4-argon
+            name: Gemini 4 Argon · shuaiapi-gemini
+            contextWindow: 1048576
+            maxTokens: 65536
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+          - id: kilo/kilo-auto/free
+            name: Auto Free
+            contextWindow: 256000
+            maxTokens: 32768
+            input: [text]
+          - id: vercel/convaiinnovations/laya-free
+            name: Laya (Free)
+            input: [text]
+          - id: vercel/reflection/beam-free
+            name: Beam 1.0 (Free)
+            contextWindow: 1048576
+            maxTokens: 131072
+            input: [text]
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: vercel/nvidia/nemotron-3.5-lightning-free
+            name: Nemotron 3.5 Lightning Free · vercel
+            contextWindow: 262144
+            maxTokens: 65536
+            input: [text]
+            reasoningEfforts:
+              "off": none
+              low: low
+              medium: medium
+              high: high
+          - id: vercel/poolside/laguna-s-2.1-free
+            name: Laguna S 2.1 Free
+            contextWindow: 256000
+            maxTokens: 32000
+            input: [text]
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+          - id: vercel/minimax/minimax-m3.1-flash
+            name: MiniMax-M3.1-Flash
+            contextWindow: 1000000
+            maxTokens: 250000
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: qoder/dfmodel
+            name: DeepSeek-Flash
+            contextWindow: 1000000
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              high: high
+              max: max
+          - id: qoder/qfmodel
+            name: Qwen3.8-Flash
+            contextWindow: 1000000
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              medium: medium
+              xhigh: xhigh
+          - id: raccoon/sn-deepseek-v4-1-flash
+            name: DeepSeek-V4.1-Flash
+            contextWindow: 1000000
+            maxTokens: 100000
+            input: [text]
+      magpie-responses:
+        displayName: Magpie · Responses
+        apiKeyEnv: MAGPIE_GATEWAY_KEY
+        api: openai-responses
+        baseURL: http://127.0.0.1:3425/v1
+        models:
+          - id: group/auto-gpt-6.1-sol
+            name: GPT-6.1 Sol
+            contextWindow: 500000
+            maxTokens: 125000
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: auto/gpt-6-luna
+            name: GPT-6-Luna · routing group
+            contextWindow: 272000
+            maxTokens: 68000
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: codex/gpt-6-luna
+            name: GPT-6-Luna · Codex
+            contextWindow: 272000
+            maxTokens: 68000
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: codex/gpt-6.1-sol
+            name: GPT-6.1-Sol
+            contextWindow: 500000
+            maxTokens: 125000
+            input: [text, image]
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: opendesign/deepseek-v4.1-flash
+            name: DeepSeek V4.1 Flash · Open Design
+            contextWindow: 1048000
+            maxTokens: 262000
+            input: [text, image]
+            reasoningEfforts:
+              high: high
+              xhigh: xhigh
+              max: max
+- id: agent-default-model # magpie
+  config:
+    provider: deepseek-account
+    model: deepseek-flash
+    reasoningEffort: high
+- id: ui-settings-general
+  name: "@deepseek-ai/dsh-client-ui-settings-general"
+  config:
+    welcomeNoticeVersion: 2026-09-28.1
+
+# 逐项启用的定制从这里往下加。上面两行 `# magpie` 归网关维护。
+
+# 只留 standard 预设。ptc / minimal / cordis 三个用不上；等 ptc 那条线引入
+# persisted kernel 再回头启用。
+- id: preset-ptc
+  disabled: true
+- id: preset-minimal
+  disabled: true
+
+# cordis 预设（Creator 模式）开回来：它比 standard 多一组运行时探测工具
+# （cordis_inspect_list / cordis_inspect_query），是我们让 dsh 改自己那个实验的前提。
+# 日常会话仍由 agent-preset-registry 默认采用 standard。
+- id: preset-cordis
+  disabled: false
+
+# 预设选择器开回来：现在有两个可用预设（standard / cordis），选择才有意义。
+# 选 cordis 的会话在首轮之前可以切，首轮之后 preset 锁定。
+- id: ui-agent-preset
+  disabled: false
+
+# 子代理调度：角色解析 → 隔离分配 → 批处理派发。omd-roles 必须先于 omd-judgment 挂载，
+# 否则 judgment 在 apply 时看到的是没有角色服务的候选列表。
+- insert:
+    - id: omd-roles
+      name: omd-roles
+      config:
+        roles:
+          judge:
+            provider: magpie
+            model: group/decider
+    - id: omd-worktree-alloc
+      name: omd-worktree-alloc
+    - id: omd-task
+      name: omd-task
+- insert:
+    - id: omd-judgment
+      name: omd-judgment
+      config:
+        candidates: [ "magpie/group/decider" ]
+        endpoints:
+          magpie:
+            baseUrl: "http://127.0.0.1:3425"
+
+# read 与 read_image 合成一个 omd-read：选择器、内联图片、资源 scheme。
+- id: tool-fs
+  config:
+    read: false
+    readImage: false
+- insert:
+    - id: omd-read
+      name: omd-read
+
+# 流式规则：没有规则文件时是直通包装。
+- insert:
+    - id: omd-ttsr
+      name: omd-ttsr
+# 项目级配置：左上侧边栏底部一个按钮，打开按项目合成的配置面板。
+- insert:
+    - id: omd-project-config
+      name: omd-project-config
+
+# 新会话首屏与对话中同一套布局：去掉居中英雄区，输入卡贴底。
+- insert:
+    - id: omd-chat-shell
+      name: omd-chat-shell
+
+# 内部路径：一个源注册一次，模型侧与界面侧同时可用。
+- insert:
+    - id: omd-internal-paths
+      name: omd-internal-paths
+
+# 可视化：可视化子代理产出 `dsh-ui` 围栏，主 agent 只看源码卡或内联渲染。
+- insert:
+    - id: omd-visual
+      name: omd-visual
+
+# 表格成图：定稿回答里的表格按确定性级联选图型，写成会话记录，由客户端画内联 SVG。
+- insert:
+    - id: omd-table-chart
+      name: omd-table-chart
+
+# 运行中状态：子代理与后台作业的实时视图，走一条只读路径，不落会话事件。
+- insert:
+    - id: omd-agents-live
+      name: omd-agents-live
+
+# 顶部两行滚动播报条，只读上面那条路径；没数据时不占高度。
+- insert:
+    - id: omd-status-ticker
+      name: omd-status-ticker
+
+# 待办：四字段（含前因后果与目标）、可嵌套、可按路径读。
+# 注意：不能靠顶层 `tool-todo disabled` 替换——上游那个挂在 preset 里，
+# 本插件自己在 agent/created 时注册进 agent 作用域来遮蔽它。
+- insert:
+    - id: omd-todo
+      name: omd-todo
+      config:
+        allowParallelActive: true
+        requireDetail: true
+
+# 待办续跑：回合停在还有 active 待办时，由判官决定这是不是"在等"；不是就 steer 一句，
+# 让同一回合再走一步。判官不可用时不催。
+- insert:
+    - id: omd-todo-driver
+      name: omd-todo-driver
+
+# 工具面：goal 退场（目标写进待办根条目的 goal）、lsp 诊断自动带上、
+# motion 的 15 个对主 agent 全部隐藏（visual 子代理豁免）。
+# 注意 deny 只去 schema，提示文本要靠 blankSections 一起遮。
+- insert:
+    - id: omd-tools-policy
+      name: omd-tools-policy
+      config:
+        deny:
+          [
+            create_goal,
+            get_goal,
+            update_goal,
+            lsp_diagnostics,
+            render_ui,
+            render_canvas,
+            update_ui,
+            render_text,
+            render_scene,
+            render_mechanism,
+            render_video,
+            process_video,
+            preview_video,
+            inspect_ui,
+            inspect_video,
+            patch_ui,
+            ui_catalog,
+            validate_ui,
+            synthesize_voice
+          ]
+        blankSections:
+          [
+            "tool:goal",
+            "generative-ui:design-skill",
+            "generative-ui:protocol",
+            "generative-ui:worked-examples"
+          ]
+        redirectCommands:
+          - name: goal
+            message: "目标功能已移除：把会话目标写在待办根条目（todos[0]）的 goal 字段里。"
+        pauseGoals: true
+        exemptPresets: [ visual ]
+
+# 技能目录由我们自己发，`skill` 工具撤掉；加载只剩 `read skill://<name>`。
+- insert:
+    - id: omd-skill-catalog
+      name: omd-skill-catalog
+
+# LSP：诊断写回 edit / write 的结果。语言服务器显式配置，无自动发现。
+# 上游 @deepseek-ai/dsh-lsp* 在发行包里不存在，实际用的是社区包 dsh-tool-lsp。
+- insert:
+    - id: lsp-tool
+      name: dsh-tool-lsp
+      config:
+        servers:
+          typescript:
+            command: typescript-language-server
+            args: [ "--stdio" ]
+            extensionToLanguage:
+              .ts: typescript
+              .tsx: typescriptreact
+              .js: javascript
+              .jsx: javascriptreact
+            projectMarkers: [ "tsconfig.json", "package.json" ]
+    - id: lsp-writethrough
+      name: omd-lsp-writethrough
+- id: locale
+  name: "@deepseek-ai/dsh-client-locale"
+  config:
+    preference: zh
+- id: agent-preset-registry
+  name: "@deepseek-ai/dsh-agent-preset-registry"
+  config:
+    default: standard
+    selectedDefault: cordis
+
+# 皮肤：全局视觉，只注入一张样式表，不改行为。
+- insert:
+    - id: omd-skin
+      name: omd-skin
+
+# 工作台外壳：自己的顶栏，逐步替换旧 chrome。
+- insert:
+    - id: omd-workbench
+      name: omd-workbench
+
+# bare 变体：零掉侧栏与右栏，只留对话与输入。
+- insert:
+    - id: omd-bare
+      name: omd-bare

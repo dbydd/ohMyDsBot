@@ -1,0 +1,24 @@
+{
+  "name": "omd-lsp-nav",
+  "version": "0.1.0",
+  "description": "Navigation LSP tools (definition, type definition, implementation, references, hover) over the language-server client dsh-tool-lsp already runs",
+  "private": true,
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/dsh-tools": "workspace:*",
+    "@deepseek-ai/schemastery": "workspace:*",
+    "dsh-tool-lsp": "*"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/dsh-tools": "workspace:*",
+    "@deepseek-ai/schemastery": "workspace:*",
+    "dsh-tool-lsp": "*"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "@dbydd/omd-chat-shell",
+  "version": "0.1.0",
+  "description": "Blank-session layout: drop the hero chrome and dock the input card at the bottom",
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client/index.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "platform": "web"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/schemastery": "*"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/schemastery": "*"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dbydd/ohMyDsBot.git",
+    "directory": "plugins/omd-chat-shell"
+  }
+}

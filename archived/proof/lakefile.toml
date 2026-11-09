@@ -1,0 +1,6 @@
+name = "omd"
+version = "0.1.0"
+defaultTargets = ["Omd"]
+
+[[lean_lib]]
+name = "Omd"

@@ -1,0 +1,191 @@
+# omd 的自定义配置本体 —— 从 ~/.dsh/profiles/omd/cordis.patch.yml 复制。
+#
+# 这里刻意不带 Magpie 网关写的那两段：`llm-pi-ai` 的模型清单与它末尾的
+# `agent-default-model`。那两段是网关按自己的 provider 生成的本机状态，网关只追加
+# 不覆盖别人的行，所以这份副本去掉它们之后，剩下的每一行都是 omd 的定制。
+#
+# 本机取值只有判官路由这一组：`omd-judgment` 的 `candidates` 与 `endpoints.magpie.baseUrl`，
+# 以及 `omd-roles` 里 `roles.judge` 指向同一个路由。别人拿到这份配置时换成自己的判官端点
+# 即可；不配也没有害处——候选为空时判官报不可用，`judge` 工具不注册。
+#
+# 恢复方式：把这份文件追加到 `$DSH_HOME/profiles/omd/cordis.patch.yml` 末尾，
+# 或整份替换（替换会丢掉本机的 Magpie 块，网关下次同步会补回来）。
+#
+# 这里只有 patch 行。声明了 `dsh.bundle` 的第三方插件（如 `dsh-motion-ui`）
+# 不进这份文件，它们由 profile 的 `dsh.profile.bundles` 引入。
+
+- id: ui-settings-general
+  name: "@deepseek-ai/dsh-client-ui-settings-general"
+  config:
+    welcomeNoticeVersion: 2026-09-28.1
+
+# 逐项挂载的定制，从这里往下加。
+
+# 留 standard 与 cordis 两个预设。ptc / minimal 用不上；等 ptc 那条线引入
+# persisted kernel 再回头启用。
+- id: preset-ptc
+  disabled: true
+- id: preset-minimal
+  disabled: true
+
+# cordis 预设（Creator 模式）开回来：它比 standard 多一组运行时探测工具
+# （cordis_inspect_list / cordis_inspect_query），是我们让 dsh 改自己那个实验的前提。
+# 日常会话仍由 agent-preset-registry 默认采用 standard。
+- id: preset-cordis
+  disabled: false
+
+# 预设选择器开回来：现在有两个可用预设（standard / cordis），选择才有意义。
+# 选 cordis 的会话在首轮之前可以切，首轮之后 preset 锁定。
+- id: ui-agent-preset
+  disabled: false
+
+# 子代理调度：角色解析 → 隔离分配 → 批处理派发。omd-roles 必须先于 omd-judgment 挂载，
+# 否则 judgment 在 apply 时看到的是没有角色服务的候选列表。
+- insert:
+    - id: omd-roles
+      name: "@dbydd/omd-roles"
+      config:
+        roles:
+          judge:
+            provider: magpie
+            model: group/decider
+    - id: omd-worktree-alloc
+      name: "@dbydd/omd-worktree-alloc"
+    - id: omd-task
+      name: "@dbydd/omd-task"
+
+- insert:
+    - id: omd-judgment
+      name: "@dbydd/omd-judgment"
+      config:
+        candidates: ["magpie/group/decider"]
+        endpoints:
+          magpie:
+            baseUrl: "http://127.0.0.1:3425"
+
+# read 与 read_image 合成一个 omd-read：选择器、内联图片、资源 scheme。
+- id: tool-fs
+  config:
+    read: false
+    readImage: false
+- insert:
+    - id: omd-read
+      name: "@dbydd/omd-read"
+
+# 流式规则：没有规则文件时是直通包装。
+- insert:
+    - id: omd-ttsr
+      name: "@dbydd/omd-ttsr"
+
+# 项目级配置：侧边栏底部一个按钮，打开按项目合成的配置面板。
+- insert:
+    - id: omd-project-config
+      name: "@dbydd/omd-project-config"
+
+# 新会话首屏与对话中同一套布局：去掉居中英雄区，输入卡贴底。
+- insert:
+    - id: omd-chat-shell
+      name: "@dbydd/omd-chat-shell"
+
+# 内部路径：一个源注册一次，模型侧与界面侧同时可用。
+- insert:
+    - id: omd-internal-paths
+      name: "@dbydd/omd-internal-paths"
+
+# 可视化：可视化子代理产出 `dsh-ui` 围栏，主 agent 只看源码卡或内联渲染。
+- insert:
+    - id: omd-visual
+      name: "@dbydd/omd-visual"
+
+# 表格成图：定稿回答里的表格按确定性级联选图型，写成会话记录，由客户端画内联 SVG。
+- insert:
+    - id: omd-table-chart
+      name: "@dbydd/omd-table-chart"
+
+# 运行中状态：子代理与后台作业的实时视图，走一条只读路径，不落会话事件。
+- insert:
+    - id: omd-agents-live
+      name: "@dbydd/omd-agents-live"
+
+# 顶部两行滚动播报条，只读上面那条路径；没数据时不占高度。
+- insert:
+    - id: omd-status-ticker
+      name: "@dbydd/omd-status-ticker"
+
+# 待办：四字段（含前因后果与目标）、可嵌套、可按路径读。
+- insert:
+    - id: omd-todo
+      name: "@dbydd/omd-todo"
+      config:
+        allowParallelActive: true
+        requireDetail: true
+
+# 待办续跑：回合停在还有 active 待办时，由判官决定这是不是"在等"；不是就 steer 一句，
+# 让同一回合再走一步。判官不可用时不催。
+- insert:
+    - id: omd-todo-driver
+      name: "@dbydd/omd-todo-driver"
+
+# 工具面：goal 退场（目标写进待办根条目的 goal）、lsp 诊断自动带上、
+# motion 的 15 个对主 agent 全部隐藏（visual 子代理豁免）。
+# 注意 deny 只去 schema，提示文本要靠 blankSections 一起遮。
+- insert:
+    - id: omd-tools-policy
+      name: "@dbydd/omd-tools-policy"
+      config:
+        deny:
+          [create_goal, get_goal, update_goal,
+           lsp_diagnostics,
+           render_ui, render_canvas, update_ui, render_text, render_scene,
+           render_mechanism, render_video, process_video, preview_video,
+           inspect_ui, inspect_video, patch_ui, ui_catalog, validate_ui,
+           synthesize_voice]
+        blankSections:
+          ["tool:goal",
+           "generative-ui:design-skill",
+           "generative-ui:protocol",
+           "generative-ui:worked-examples"]
+        redirectCommands:
+          - name: goal
+            message: "目标功能已移除：把会话目标写在待办根条目（todos[0]）的 goal 字段里。"
+        pauseGoals: true
+        exemptPresets: [visual]
+
+# 技能目录由我们自己发，`skill` 工具撤掉；加载只剩 `read skill://<name>`。
+- insert:
+    - id: omd-skill-catalog
+      name: "@dbydd/omd-skill-catalog"
+
+# LSP：诊断写回 edit / write 的结果。语言服务器显式配置，无自动发现。
+# 上游 @deepseek-ai/dsh-lsp* 在发行包里不存在，实际用的是社区包 dsh-tool-lsp。
+- insert:
+    - id: lsp-tool
+      name: dsh-tool-lsp
+      config:
+        servers:
+          typescript:
+            command: typescript-language-server
+            args: ["--stdio"]
+            extensionToLanguage:
+              .ts: typescript
+              .tsx: typescriptreact
+              .js: javascript
+              .jsx: javascriptreact
+            projectMarkers: ["tsconfig.json", "package.json"]
+    - id: lsp-writethrough
+      name: "@dbydd/omd-lsp-writethrough"
+
+# 皮肤：全局视觉，只注入一张样式表，不改行为。
+- insert:
+    - id: omd-skin
+      name: "@dbydd/omd-skin"
+
+# 工作台外壳：自己的顶栏，逐步替换旧 chrome。
+- insert:
+    - id: omd-workbench
+      name: "@dbydd/omd-workbench"
+
+# 酒馆面板：Context Tavern 的 Web 前端（纪元条 / 世界书 / Author's Note）。
+- insert:
+    - id: omd-context-tavern
+      name: "@dbydd/omd-context-tavern"

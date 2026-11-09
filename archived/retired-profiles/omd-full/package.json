@@ -1,0 +1,20 @@
+{
+  "name": "dsh-profile-omd-full",
+  "private": true,
+  "dependencies": {
+    "ds-bot": "link:../../ds-bot/ds-bot",
+    "dsh-motion-ui": "link:../../external-plugins/dsh-motion-ui"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "ds-bot",
+        "dsh-motion-ui",
+        "@deepseek-ai/dsh-experimental-inspector-profile"
+      ],
+      "patchReload": "live"
+    }
+  }
+}

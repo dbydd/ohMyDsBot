@@ -1,0 +1,7 @@
+# Backend profile: dsh-base + dsh-sdk-app on dsh 0.2.1-rc.5.
+# Host capabilities (questions, approval, commands, settings and titles) remain
+# available to future clients. The web-app bundle supplies visible UI and is
+# absent from this profile. The SDK bundle owns its own title/HMR defaults.
+- id: sdk-app-startup
+  config:
+    profile: omd-kernel

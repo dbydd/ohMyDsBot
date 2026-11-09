@@ -1,0 +1,29 @@
+-- 记忆引擎这个盒子：把一个纪元的增量事实沉淀为记忆，并按需召回。
+-- 只写沉淀端口在数据上的前后条件；召回与反思的先后由 design/behavior 持有。
+-- 精度停在“沉淀按纪元身份记账”：事实内容、判定模型的调用方式与提示保持不透明。
+module dsh_memory
+exports
+  types
+    Epoch; ReflectOutcome
+operations
+  reflect : Epoch ==> ReflectOutcome
+definitions
+types
+  Epoch = token;
+  -- 判定模型超时时沉淀放弃，纪元照样收束。
+  ReflectOutcome = <Settled> | <TimedOut>;
+
+state Facts of
+  settled : set of Epoch
+init s == s = mk_Facts({})
+end
+
+operations
+-- REQ-2：纪元反思把该纪元的增量事实交给记忆库；同一纪元至多沉淀一次，超时的纪元不进入 settled。
+reflect(e : Epoch) res : ReflectOutcome
+ext wr settled
+pre e not in set settled
+post (res = <Settled> and settled = settled~ union {e}) or
+     (res = <TimedOut> and settled = settled~);
+
+end dsh_memory

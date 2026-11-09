@@ -1,0 +1,6 @@
+[submodule "external-plugins/dsh-motion-ui"]
+	path = external-plugins/dsh-motion-ui
+	url = https://github.com/Scorp1o117/dsh-motion-ui.git
+[submodule "ds-bot"]
+	path = ds-bot
+	url = https://github.com/dbydd/DS-Bot.git

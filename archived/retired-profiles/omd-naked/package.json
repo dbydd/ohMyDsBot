@@ -1,0 +1,13 @@
+{
+  "name": "dsh-profile-omd-naked",
+  "private": true,
+  "dependencies": {},
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base"
+      ],
+      "patchReload": "live"
+    }
+  }
+}

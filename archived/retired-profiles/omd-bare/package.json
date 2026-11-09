@@ -1,0 +1,54 @@
+{
+  "name": "dsh-profile-omd",
+  "private": true,
+  "dependencies": {
+    "dsh-browser-tool": "^0.1.11",
+    "dsh-motion-ui": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/external-plugins/dsh-motion-ui",
+    "dsh-plugin": "^2.0.4",
+    "dsh-rewind-plugin": "^0.17.1",
+    "dsh-tool-ast-grep": "^0.1.2",
+    "dsh-tool-lsp": "^0.1.2",
+    "omd-advisor": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-advisor",
+    "omd-agents": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-agents",
+    "omd-agents-hub": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-agents-hub",
+    "omd-agents-live": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-agents-live",
+    "omd-ast-edit": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-ast-edit",
+    "omd-auto-thinking": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-auto-thinking",
+    "omd-context-notes": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-context-notes",
+    "omd-core": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-core",
+    "omd-force": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-force",
+    "omd-handoff": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-handoff",
+    "omd-judgment": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-judgment",
+    "omd-loop": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-loop",
+    "omd-lsp-nav": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-lsp-nav",
+    "omd-lsp-writethrough": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-lsp-writethrough",
+    "omd-plan-gate": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-plan-gate",
+    "omd-prewalk": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-prewalk",
+    "omd-read": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-read",
+    "omd-shake": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-shake",
+    "omd-skin": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-skin",
+    "omd-status-ticker": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-status-ticker",
+    "omd-table-chart": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-table-chart",
+    "omd-task": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-task",
+    "omd-todo-driver": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-todo-driver",
+    "omd-tool-eviction": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-tool-eviction",
+    "omd-ttsr": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-ttsr",
+    "omd-unexpected-stop": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-unexpected-stop",
+    "omd-visual": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-visual",
+    "omd-bare": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-bare",
+    "omd-workbench": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-workbench",
+    "omd-web-providers": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-web-providers",
+    "omd-worktree-alloc": "link:/Users/dbydd/manual_install_pkgs/oh-my-dsh/plugins/omd-worktree-alloc"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "dsh-motion-ui",
+        "@deepseek-ai/dsh-experimental-inspector-profile"
+      ],
+      "patchReload": "live"
+    }
+  }
+}

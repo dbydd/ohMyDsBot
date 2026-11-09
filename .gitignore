@@ -1,0 +1,28 @@
+# Read-only reference material: the upstream dsh checkout and the Alexandria
+# knowledge base reached through two symlinks. Read here, never edited in place.
+/refs/
+
+# Installed dependencies
+node_modules/
+
+.DS_Store
+
+# omp runtime state
+.omp/hindsight/
+.omp/
+
+# Verification run artifacts and the session notebook: regenerated state that
+# nobody reads from git.
+artifacts/
+context_notes
+
+# omd isolated working trees (linked worktrees and APFS clones)
+.omd/clones/
+.omd/worktrees/
+
+# Archived Lean development: its build output and regenerated dump are not state
+# anyone reads.
+archived/proof/.lake/
+archived/proof/generated/dump.yml
+
+.onlyne

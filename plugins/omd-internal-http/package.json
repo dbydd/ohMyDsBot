@@ -1,0 +1,25 @@
+{
+  "name": "@dbydd/omd-internal-http",
+  "version": "0.1.0",
+  "description": "The internal-path registry over HTTP: GET fetches an address, POST submits to it, GET /api/paths/stream follows a source's pushes, so a script reaches the same addresses the model does",
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "*"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dbydd/ohMyDsBot.git",
+    "directory": "plugins/omd-internal-http"
+  }
+}

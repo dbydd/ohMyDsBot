@@ -1,0 +1,132 @@
+#!/bin/sh
+# scripts/path — the dsh internal-path registry over HTTP.
+#
+#   path read <uri>                the documentation behind an address
+#   path get <uri>                 GET an address; the representation goes to stdout
+#   path post <uri> [file|-]       POST a body to an address
+#   path watch <uri>               follow an address whose source pushes changes
+#   path list                      list the registered sources
+#
+# The launch token is the one `dsh web` printed in its URL. /api accepts only a
+# signed cookie, so the token is exchanged at /connect once per invocation.
+set -eu
+
+base=${DSH_URL:-http://127.0.0.1:3099}
+base=${base%/}
+token=${DSH_TOKEN:-}
+jar=
+cleanup() { [ -z "$jar" ] || rm -f "$jar"; }
+trap cleanup EXIT INT TERM
+
+usage() {
+  cat <<'EOF'
+usage: path read <uri>
+       path get <uri>
+       path post <uri> [<body-file>|-]
+       path watch <uri>
+       path list
+
+  read <uri>     Read the documentation behind an address (listings, descriptions,
+                 schemas) — the same text the model reads.
+  get <uri>      GET an internal address and write its representation to stdout.
+  post <uri>     POST a body to an internal address. The body is the named file,
+                 stdin when the argument is "-", or empty when it is omitted.
+  watch <uri>    Follow an address whose source pushes changes. Each event is
+                 printed as it arrives, and the command ends when the stream
+                 does; a source that cannot push answers 409 and says so.
+  list           Print the registered sources as JSON.
+
+environment:
+  DSH_URL        Base URL of a running deployment. Default http://127.0.0.1:3099
+  DSH_TOKEN      Launch token from the URL `dsh web` printed. Exchanged once at
+                 /connect for the API cookie that /api requires.
+
+Any answer outside 2xx writes the body to stdout and fails: curl reports the
+status on stderr and the script exits non-zero.
+EOF
+}
+
+# Percent-encode the characters that would otherwise end the query value.
+encode() {
+  printf '%s' "$1" | sed -e 's/%/%25/g' -e 's/ /%20/g' -e 's/#/%23/g' \
+    -e 's/?/%3F/g' -e 's/&/%26/g' -e 's/+/%2B/g'
+}
+
+command=${1:-}
+if [ $# -gt 0 ]; then shift; fi
+
+case "$command" in
+  read | get | post | watch | list) ;;
+  -h | --help | help)
+    usage
+    exit 0
+    ;;
+  '')
+    usage >&2
+    exit 2
+    ;;
+  *)
+    echo "path: unknown command: $command" >&2
+    usage >&2
+    exit 2
+    ;;
+esac
+
+if [ -n "$token" ]; then
+  jar=$(mktemp "${TMPDIR:-/tmp}/dsh-path.XXXXXX")
+  if ! curl -sS -f -o /dev/null -c "$jar" \
+    "$base/connect?token=$(encode "$token")&interactions=none"; then
+    echo "path: cannot exchange DSH_TOKEN at $base/connect" >&2
+    exit 1
+  fi
+fi
+
+fetch() {
+  if [ -n "$jar" ]; then
+    curl -sS --fail-with-body -b "$jar" "$@"
+  else
+    curl -sS --fail-with-body "$@"
+  fi
+}
+
+# A pushed stream reaches the terminal only unbuffered, so `watch` adds -N;
+# every other verb is answered by one complete body.
+follow() {
+  if [ -n "$jar" ]; then
+    curl -sS -N --fail-with-body -b "$jar" "$@"
+  else
+    curl -sS -N --fail-with-body "$@"
+  fi
+}
+
+case "$command" in
+  read)
+    [ $# -eq 1 ] || { usage >&2; exit 2; }
+    fetch "$base/api/paths?doc=1&uri=$(encode "$1")"
+    ;;
+  get)
+    [ $# -eq 1 ] || { usage >&2; exit 2; }
+    fetch "$base/api/paths?uri=$(encode "$1")"
+    ;;
+  post)
+    [ $# -ge 1 ] && [ $# -le 2 ] || { usage >&2; exit 2; }
+    target="$base/api/paths?uri=$(encode "$1")"
+    body=${2:-}
+    case "$body" in
+      '') fetch --data-binary '' "$target" ;;
+      -) fetch --data-binary @- "$target" ;;
+      *)
+        [ -f "$body" ] || { echo "path: no such file: $body" >&2; exit 1; }
+        fetch --data-binary "@$body" "$target"
+        ;;
+    esac
+    ;;
+  watch)
+    [ $# -eq 1 ] || { usage >&2; exit 2; }
+    follow "$base/api/paths/stream?uri=$(encode "$1")"
+    ;;
+  list)
+    [ $# -eq 0 ] || { usage >&2; exit 2; }
+    fetch "$base/api/paths"
+    ;;
+esac

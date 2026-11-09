@@ -1,0 +1,24 @@
+{
+  "name": "omd-auto-thinking",
+  "version": "0.1.0",
+  "description": "Picks a reasoning effort per step from the user request via the judgment service.",
+  "private": true,
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/dsh-agent": "workspace:~",
+    "@deepseek-ai/dsh-llm": "workspace:~",
+    "@deepseek-ai/schemastery": "workspace:~"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/dsh-agent": "workspace:~",
+    "@deepseek-ai/dsh-llm": "workspace:~",
+    "@deepseek-ai/schemastery": "workspace:~"
+  }
+}

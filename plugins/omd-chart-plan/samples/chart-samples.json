@@ -1,0 +1,56 @@
+{
+  "tuning": [
+    {
+      "id": "tuning-1-models-multi-unit",
+      "description": "LLM Benchmark comparing latency (ms), accuracy (%), and cost ($). Tests multi-unit metrics, polarity direction, row rivals, and ascending sort when smaller is better.",
+      "markdown": "| Model | Latency (ms) | Pass Rate | Cost ($) |\n|---|---|---|---|\n| Model Alpha | 120 | 85.0% | 0.05 |\n| **Model Beta** | 95 | 92.5% | 0.12 |\n| Model Gamma | 110 | 88.0% | 0.08 |\n| Baseline | 150 | 78.0% | 0.04 |"
+    },
+    {
+      "id": "tuning-2-composition-tokens",
+      "description": "Token usage breakdown with exact sum relation. Tests structural-override where parts (cached + prompt + completion) sum to total tokens.",
+      "markdown": "| Service | Cached Tokens | Prompt Tokens | Completion Tokens | Total Tokens |\n|---|---|---|---|---|\n| Ingestion | 1200 | 800 | 400 | 2400 |\n| Query Engine | 3500 | 1500 | 1000 | 6000 |\n| Summarizer | 500 | 2000 | 1500 | 4000 |"
+    },
+    {
+      "id": "tuning-3-temporal-timeline",
+      "description": "Daily metrics with ISO date headers. Tests line trend detection, temporal ordering preservation, and whole-table trend title.",
+      "markdown": "| Date | Active Users | New Signups |\n|---|---|---|\n| 2026-10-01 | 1200 | 150 |\n| 2026-10-02 | 1350 | 180 |\n| 2026-10-03 | 1420 | 195 |\n| 2026-10-04 | 1580 | 220 |"
+    },
+    {
+      "id": "tuning-4-prose-nonchart",
+      "description": "Prose-heavy implementation status table. Tests non-chart filter where descriptive text carries the table.",
+      "markdown": "| Feature | Description | Status |\n|---|---|---|\n| Auth | Implements JWT token authentication and OAuth2 callbacks with refresh tokens | Completed |\n| Storage | S3 compatible blob storage provider with local filesystem fallback | In Progress |\n| Logging | Structured json logging with log rotation and alerts integration | Pending |"
+    },
+    {
+      "id": "tuning-5-ineligible-small",
+      "description": "Small 2-row table comparing one measure. Tests shouldJudge guard and small-table skip.",
+      "markdown": "| Pipeline | Duration |\n|---|---|\n| Build | 12s |\n| Test | 45s |"
+    }
+  ],
+  "heldout": [
+    {
+      "id": "heldout-1-server-hardware-benchmark",
+      "description": "Hardware benchmark comparing server instance throughput, p99 latency, and cost per million queries.",
+      "markdown": "| Instance | Throughput (qps) | P99 Latency (ms) | Monthly Cost ($) |\n|---|---|---|---|\n| c7g.large | 4200 | 18.5 | 54.00 |\n| **c7g.2xlarge** | 16500 | 11.2 | 216.00 |\n| m7g.xlarge | 8100 | 14.0 | 118.00 |\n| t4g.medium | 1900 | 42.0 | 24.50 |"
+    },
+    {
+      "id": "heldout-2-memory-allocation-composition",
+      "description": "Memory footprint by subsystem with explicit total. Structural additivity across all rows.",
+      "markdown": "| Subsystem | Heap (MiB) | Stack (MiB) | Off-Heap (MiB) | Total Memory (MiB) |\n|---|---|---|---|---|\n| Engine Core | 512 | 64 | 256 | 832 |\n| Cache Worker | 1024 | 32 | 512 | 1568 |\n| Network IO | 256 | 64 | 128 | 448 |"
+    },
+    {
+      "id": "heldout-3-release-version-progression",
+      "description": "Sequential software versions tracking bundle size and startup time.",
+      "markdown": "| Release | Bundle Size (KiB) | Startup Time (ms) |\n|---|---|---|\n| v1.0 | 450 | 320 |\n| v1.1 | 420 | 290 |\n| v1.2 | 390 | 260 |\n| v1.3 | 360 | 230 |"
+    },
+    {
+      "id": "heldout-4-task-tracker-prose",
+      "description": "Architectural tasks and ownership notes without plottable numeric comparison.",
+      "markdown": "| Milestone | Scope & Deliverables | Owner |\n|---|---|---|\n| Sprint 1 | Initial schema migration and unit tests for internal paths | Alice |\n| Sprint 2 | WebSocket multiplexer implementation and motion driver wiring | Bob |\n| Sprint 3 | End-to-end integration tests and performance profiling | Charlie |"
+    },
+    {
+      "id": "heldout-5-mixed-ineligible-units",
+      "description": "Incompatible mixed formats and 2 rows skipping judge.",
+      "markdown": "| Run | Result |\n|---|---|\n| Run 1 | 12ms |\n| Run 2 | 24ms |"
+    }
+  ]
+}

@@ -1,0 +1,373 @@
+{
+  "generatedBy": "ssot gen",
+  "elements": [
+    {
+      "fqn": "dsh",
+      "kind": "system",
+      "parent": null,
+      "children": [
+        "dsh.cow",
+        "dsh.dsbot",
+        "dsh.history",
+        "dsh.memory",
+        "dsh.runner",
+        "dsh.tavern"
+      ],
+      "tags": [],
+      "business": false,
+      "contract": null
+    },
+    {
+      "fqn": "dsh.cow",
+      "kind": "container",
+      "parent": "dsh",
+      "children": [],
+      "tags": [
+        "contract"
+      ],
+      "business": false,
+      "contract": {
+        "module": "dsh_cow"
+      }
+    },
+    {
+      "fqn": "dsh.dsbot",
+      "kind": "container",
+      "parent": "dsh",
+      "children": [],
+      "tags": [],
+      "business": false,
+      "contract": null
+    },
+    {
+      "fqn": "dsh.history",
+      "kind": "container",
+      "parent": "dsh",
+      "children": [],
+      "tags": [
+        "contract",
+        "datastore"
+      ],
+      "business": false,
+      "contract": {
+        "module": "dsh_history"
+      }
+    },
+    {
+      "fqn": "dsh.memory",
+      "kind": "container",
+      "parent": "dsh",
+      "children": [],
+      "tags": [
+        "contract"
+      ],
+      "business": false,
+      "contract": {
+        "module": "dsh_memory"
+      }
+    },
+    {
+      "fqn": "dsh.runner",
+      "kind": "container",
+      "parent": "dsh",
+      "children": [],
+      "tags": [],
+      "business": false,
+      "contract": null
+    },
+    {
+      "fqn": "dsh.tavern",
+      "kind": "container",
+      "parent": "dsh",
+      "children": [
+        "dsh.tavern.assembler",
+        "dsh.tavern.epoch",
+        "dsh.tavern.lorebook",
+        "dsh.tavern.panel"
+      ],
+      "tags": [],
+      "business": false,
+      "contract": null
+    },
+    {
+      "fqn": "dsh.tavern.assembler",
+      "kind": "component",
+      "parent": "dsh.tavern",
+      "children": [],
+      "tags": [],
+      "business": false,
+      "contract": null
+    },
+    {
+      "fqn": "dsh.tavern.epoch",
+      "kind": "component",
+      "parent": "dsh.tavern",
+      "children": [],
+      "tags": [],
+      "business": false,
+      "contract": null
+    },
+    {
+      "fqn": "dsh.tavern.lorebook",
+      "kind": "component",
+      "parent": "dsh.tavern",
+      "children": [],
+      "tags": [
+        "contract"
+      ],
+      "business": false,
+      "contract": {
+        "module": "dsh_tavern_lorebook"
+      }
+    },
+    {
+      "fqn": "dsh.tavern.panel",
+      "kind": "component",
+      "parent": "dsh.tavern",
+      "children": [],
+      "tags": [],
+      "business": false,
+      "contract": null
+    },
+    {
+      "fqn": "gateway",
+      "kind": "system",
+      "parent": null,
+      "children": [],
+      "tags": [
+        "external"
+      ],
+      "business": false,
+      "contract": null
+    },
+    {
+      "fqn": "hindsight",
+      "kind": "system",
+      "parent": null,
+      "children": [],
+      "tags": [
+        "external"
+      ],
+      "business": false,
+      "contract": null
+    },
+    {
+      "fqn": "operator",
+      "kind": "actor",
+      "parent": null,
+      "children": [],
+      "tags": [],
+      "business": false,
+      "contract": null
+    },
+    {
+      "fqn": "sandboxVm",
+      "kind": "system",
+      "parent": null,
+      "children": [],
+      "tags": [
+        "external"
+      ],
+      "business": false,
+      "contract": null
+    }
+  ],
+  "relations": [
+    {
+      "source": "dsh",
+      "target": "gateway",
+      "title": "请求模型推理"
+    },
+    {
+      "source": "dsh",
+      "target": "hindsight",
+      "title": "读写记忆"
+    },
+    {
+      "source": "dsh",
+      "target": "sandboxVm",
+      "title": "挂载工作区并派发执行指令"
+    },
+    {
+      "source": "dsh.dsbot",
+      "target": "dsh.runner",
+      "title": "委托执行沙箱子任务"
+    },
+    {
+      "source": "dsh.dsbot",
+      "target": "dsh.tavern",
+      "title": "挂载详情抽屉 Tab 并同步段切换（Part Switch / Checkpoint）"
+    },
+    {
+      "source": "dsh.dsbot",
+      "target": "dsh.tavern.epoch",
+      "title": "通知段切换（switch / compact）并同步刷新记忆快照"
+    },
+    {
+      "source": "dsh.dsbot",
+      "target": "dsh.tavern.panel",
+      "title": "通过 registerDetailsTab 挂载酒馆标签页"
+    },
+    {
+      "source": "dsh.memory",
+      "target": "gateway",
+      "title": "调用判定模型"
+    },
+    {
+      "source": "dsh.memory",
+      "target": "hindsight",
+      "title": "读写记忆库"
+    },
+    {
+      "source": "dsh.runner",
+      "target": "dsh.cow",
+      "title": "分配隔离工作区与收集补丁"
+    },
+    {
+      "source": "dsh.runner",
+      "target": "gateway",
+      "title": "请求模型意图与推理决策"
+    },
+    {
+      "source": "dsh.runner",
+      "target": "sandboxVm",
+      "title": "启动虚拟机、挂载工作区并驱动执行"
+    },
+    {
+      "source": "dsh.tavern",
+      "target": "dsh.history",
+      "title": "归档并调阅会话历史"
+    },
+    {
+      "source": "dsh.tavern",
+      "target": "dsh.memory",
+      "title": "沉淀与召回记忆"
+    },
+    {
+      "source": "dsh.tavern",
+      "target": "gateway",
+      "title": "提交模型请求"
+    },
+    {
+      "source": "dsh.tavern.assembler",
+      "target": "dsh.tavern.epoch",
+      "title": "交出闭合回合的规模"
+    },
+    {
+      "source": "dsh.tavern.assembler",
+      "target": "dsh.tavern.lorebook",
+      "title": "读取激活条目"
+    },
+    {
+      "source": "dsh.tavern.assembler",
+      "target": "gateway",
+      "title": "交付装配后的请求"
+    },
+    {
+      "source": "dsh.tavern.epoch",
+      "target": "dsh.history",
+      "title": "归档纪元切片"
+    },
+    {
+      "source": "dsh.tavern.epoch",
+      "target": "dsh.memory",
+      "title": "触发纪元反思"
+    },
+    {
+      "source": "dsh.tavern.epoch",
+      "target": "dsh.tavern.lorebook",
+      "title": "触发世界书重播种"
+    },
+    {
+      "source": "dsh.tavern.panel",
+      "target": "dsh.tavern.epoch",
+      "title": "手动请求纪元重播种"
+    },
+    {
+      "source": "dsh.tavern.panel",
+      "target": "dsh.tavern.lorebook",
+      "title": "注册/暂存世界书条目与读取激活状态"
+    },
+    {
+      "source": "operator",
+      "target": "dsh",
+      "title": "发起对话回合"
+    },
+    {
+      "source": "operator",
+      "target": "dsh.dsbot",
+      "title": "管理 Bot 团队与打开详情抽屉"
+    },
+    {
+      "source": "operator",
+      "target": "dsh.runner",
+      "title": "派发 Issue 编码或沙箱任务"
+    },
+    {
+      "source": "operator",
+      "target": "dsh.tavern",
+      "title": "发起对话回合与酒馆配置"
+    },
+    {
+      "source": "operator",
+      "target": "dsh.tavern.assembler",
+      "title": "提交对话指令"
+    },
+    {
+      "source": "operator",
+      "target": "dsh.tavern.panel",
+      "title": "编辑世界书条目与手动触发重播种"
+    },
+    {
+      "source": "operator",
+      "target": "sandboxVm",
+      "title": "通过 noVNC 旁路监控并实时接管操作"
+    }
+  ],
+  "views": [
+    {
+      "id": "dshView",
+      "of": "dsh",
+      "nodes": [
+        "dsh",
+        "dsh.cow",
+        "dsh.dsbot",
+        "dsh.history",
+        "dsh.memory",
+        "dsh.runner",
+        "dsh.tavern",
+        "gateway",
+        "hindsight",
+        "operator",
+        "sandboxVm"
+      ]
+    },
+    {
+      "id": "index",
+      "of": null,
+      "nodes": [
+        "dsh",
+        "gateway",
+        "hindsight",
+        "operator",
+        "sandboxVm"
+      ]
+    },
+    {
+      "id": "tavernView",
+      "of": "dsh.tavern",
+      "nodes": [
+        "dsh.dsbot",
+        "dsh.history",
+        "dsh.memory",
+        "dsh.tavern",
+        "dsh.tavern.assembler",
+        "dsh.tavern.epoch",
+        "dsh.tavern.lorebook",
+        "dsh.tavern.panel",
+        "gateway",
+        "operator"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+# omd-internal-paths — internal paths as one Host service, with the web bridge.
+# The Loader applies this when the package enters a profile's bundle list; no
+# manual profile row is needed.
+- insert:
+    - id: omd-internal-paths
+      name: omd-internal-paths

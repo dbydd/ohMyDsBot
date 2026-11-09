@@ -1,0 +1,5 @@
+# omd-sandbox-vm — isolated ARM64 Linux machines for agent commands and a
+# watchable desktop.
+- insert:
+    - id: omd-sandbox-vm
+      name: omd-sandbox-vm

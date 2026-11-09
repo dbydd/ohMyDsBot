@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "skills": {
+    "ssot": {
+      "source": "mouriya-s-lab/SSoT",
+      "sourceType": "github",
+      "skillPath": "skills/ssot/SKILL.md",
+      "computedHash": "2f01ce64409a63cb0e2f87f4a6027cdebad7b11a8bafdbeec845502cb810d5f9"
+    },
+    "ssot-c4": {
+      "source": "mouriya-s-lab/SSoT",
+      "sourceType": "github",
+      "skillPath": "skills/ssot-c4/SKILL.md",
+      "computedHash": "0904dd00c1056dfdcb39cb74a5416df3a88934f2dc8aab7e3ce4ad0700337542"
+    },
+    "ssot-judge": {
+      "source": "mouriya-s-lab/SSoT",
+      "sourceType": "github",
+      "skillPath": "skills/ssot-judge/SKILL.md",
+      "computedHash": "339303fbfeb7387c0a3ae01cc5a602dd386d6f2e101a372b447e1c26e654fc5c"
+    },
+    "ssot-migrate-read": {
+      "source": "mouriya-s-lab/SSoT",
+      "sourceType": "github",
+      "skillPath": "skills/ssot-migrate-read/SKILL.md",
+      "computedHash": "ef6d70c79b2d91c6e7d4110c03cbab1dc2e91621df43613740b1821dd5d75f9f"
+    },
+    "ssot-quint": {
+      "source": "mouriya-s-lab/SSoT",
+      "sourceType": "github",
+      "skillPath": "skills/ssot-quint/SKILL.md",
+      "computedHash": "c5fa2d296de47ab38163cd54c3ea83e8182f8956ee4819fbbe5dc372304f49f5"
+    },
+    "ssot-requirement": {
+      "source": "mouriya-s-lab/SSoT",
+      "sourceType": "github",
+      "skillPath": "skills/ssot-requirement/SKILL.md",
+      "computedHash": "312fa3a4c8357653fa59633eee4665c852367e795a4535675988464533963ee0"
+    },
+    "ssot-vdm": {
+      "source": "mouriya-s-lab/SSoT",
+      "sourceType": "github",
+      "skillPath": "skills/ssot-vdm/SKILL.md",
+      "computedHash": "bb2b55d07e159b8be306b93c9e4463bdaec80dac4169ce0599dadba2b32ab5ed"
+    },
+    "ssot-verify-behavior": {
+      "source": "mouriya-s-lab/SSoT",
+      "sourceType": "github",
+      "skillPath": "skills/ssot-verify-behavior/SKILL.md",
+      "computedHash": "e8968580a2b25b2b3ba664f588f19d676e04ef2107adebf3a072d5a21b8d1185"
+    },
+    "ssot-verify-contract": {
+      "source": "mouriya-s-lab/SSoT",
+      "sourceType": "github",
+      "skillPath": "skills/ssot-verify-contract/SKILL.md",
+      "computedHash": "676bbcd0d602831ea5acd6fc21b1a9cb8bce82906c7df298eb6e7c8ddb064660"
+    },
+    "ssot-verify-structure": {
+      "source": "mouriya-s-lab/SSoT",
+      "sourceType": "github",
+      "skillPath": "skills/ssot-verify-structure/SKILL.md",
+      "computedHash": "452bb205ff17761b7c15ee0c362d19ada649d8dcc05c2c467ecbc810cffd9a12"
+    },
+    "ssot-write-behavior": {
+      "source": "mouriya-s-lab/SSoT",
+      "sourceType": "github",
+      "skillPath": "skills/ssot-write-behavior/SKILL.md",
+      "computedHash": "77dfc7b762646716e67a7622824dfa8da33e1135ccb9065e54d08145766bf967"
+    },
+    "ssot-write-contract": {
+      "source": "mouriya-s-lab/SSoT",
+      "sourceType": "github",
+      "skillPath": "skills/ssot-write-contract/SKILL.md",
+      "computedHash": "e6bed0ecc00f511835dab358c796d1d6c0c7314dfae5099222c48a014f1d6032"
+    },
+    "ssot-write-deploy": {
+      "source": "mouriya-s-lab/SSoT",
+      "sourceType": "github",
+      "skillPath": "skills/ssot-write-deploy/SKILL.md",
+      "computedHash": "fbe62ea46838ae5195c92717d06030326c92ef2061f55116bb2749923e0ffac3"
+    },
+    "ssot-write-level": {
+      "source": "mouriya-s-lab/SSoT",
+      "sourceType": "github",
+      "skillPath": "skills/ssot-write-level/SKILL.md",
+      "computedHash": "d32201095976a78dc604640bd8cb0c1c4eb7376e733e971522b17c9a47cce725"
+    }
+  }
+}

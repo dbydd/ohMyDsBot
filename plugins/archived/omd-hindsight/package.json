@@ -1,0 +1,33 @@
+{
+  "name": "omd-hindsight",
+  "version": "0.1.0",
+  "private": true,
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/dsh-agent": "workspace:~",
+    "@deepseek-ai/dsh-llm": "workspace:~",
+    "@deepseek-ai/dsh-session": "workspace:~",
+    "@deepseek-ai/dsh-tools": "workspace:~",
+    "@deepseek-ai/schemastery": "workspace:~"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/dsh-agent": "workspace:~",
+    "@deepseek-ai/dsh-llm": "workspace:~",
+    "@deepseek-ai/dsh-session": "workspace:~",
+    "@deepseek-ai/dsh-tools": "workspace:~",
+    "@deepseek-ai/schemastery": "workspace:~",
+    "@deepseek-ai/dsh-system-prompt": "workspace:~"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

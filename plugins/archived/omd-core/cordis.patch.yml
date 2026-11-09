@@ -1,0 +1,117 @@
+# omd-core — the oh-my-dsh host layer, as one bundle over @deepseek-ai/dsh-base.
+#
+# The single profile this repository boots stacks this layer and then the web
+# application bundle:
+#
+#   omd   dsh-base + omd-core + dsh-web-app + dsh-plugin   (browser)
+#
+# So a row here is a fact about the harness: it must work with no screen
+# attached. The application bundle may override a row by id (last write wins)
+# but must not restate it, and nothing in this layer may reference a package
+# that only the application bundle installs.
+#
+# Model routing is not here: the Magpie gateway injects `llm-pi-ai` providers
+# into each profile's own patch layer.
+#
+# An empty patch layer must be spelled [] — a comment-only file fails to parse.
+
+# Web provider failover chain: search and fetch fallbacks
+- insert:
+    - id: omd-web-providers
+      name: omd-web-providers
+- id: web
+  name: '@deepseek-ai/dsh-web'
+  config:
+    searchProvider: omd-auto
+    fetchProvider: omd-auto-fetch
+
+# ── omd-core: full omp-equivalent capabilities ──────────────────────────────
+
+- insert:
+    # ── decision model ──────────────────────────────────────────────────────
+    # Must be mounted before its consumers: they resolve `ctx.judgment` through
+    # `inject`, so a missing row leaves them pending rather than broken.
+    - id: omd-judgment
+      name: omd-judgment
+    - id: omd-auto-thinking
+      name: omd-auto-thinking
+    - id: omd-unexpected-stop
+      name: omd-unexpected-stop
+    - id: omd-advisor
+      name: omd-advisor
+
+    # ── working memory and context maintenance ─────────────────────────────
+    - id: omd-context-notes
+      name: omd-context-notes
+    - id: omd-handoff
+      name: omd-handoff
+    - id: omd-tool-eviction
+      name: omd-tool-eviction
+    - id: omd-shake
+      name: omd-shake
+
+    # ── code intelligence ──────────────────────────────────────────────────
+    # The community LSP client owns the server processes; the two omd rows only
+    # add the navigation tools it lacks and the post-write diagnostics return.
+    - id: lsp
+      name: dsh-tool-lsp
+    - id: omd-lsp-nav
+      name: omd-lsp-nav
+    - id: omd-lsp-writethrough
+      name: omd-lsp-writethrough
+    - id: tool-ast-grep
+      name: dsh-tool-ast-grep
+    - id: omd-ast-edit
+      name: omd-ast-edit
+
+    # ── modes ──────────────────────────────────────────────────────────────
+    - id: omd-plan-gate
+      name: omd-plan-gate
+    - id: omd-loop
+      name: omd-loop
+    - id: omd-force
+      name: omd-force
+    - id: omd-prewalk
+      name: omd-prewalk
+    - id: omd-ttsr
+      name: omd-ttsr
+
+    # ── delegation and observation ─────────────────────────────────────────
+    - id: omd-agents
+      name: omd-agents
+    - id: omd-task
+      name: omd-task
+    - id: omd-worktree-alloc
+      name: omd-worktree-alloc
+    - id: omd-agents-hub
+      name: omd-agents-hub
+
+    # ── checkpoint, browser, worktree, terminal ────────────────────────────
+    - id: dsh-rewind-plugin
+      name: dsh-rewind-plugin
+    - id: dsh-browser-tool
+      name: dsh-browser-tool
+    - id: worktree
+      name: '@deepseek-ai/dsh-experimental-worktree'
+    - id: tool-worktree
+      name: '@deepseek-ai/dsh-experimental-tool-worktree'
+    - id: terminal
+      name: '@deepseek-ai/dsh-terminal'
+    # The bash backend needs a POSIX shell; disable the row rather than fail boot.
+    - id: terminal-bash
+      name: '@deepseek-ai/dsh-terminal-bash'
+      disabled: !!js process.platform === 'win32'
+    - id: tool-terminal
+      name: '@deepseek-ai/dsh-tool-terminal'
+#
+# MCP servers are NOT mounted bare. `@deepseek-ai/dsh-mcp-client` reads
+# `config.reconnect` in `apply`, so a row without a config crashes the boot with
+# `Cannot read properties of undefined (reading 'reconnect')`. Each server is one
+# row carrying its own `transport` / `serverName` plus `url` or `command`:
+#
+#   - id: mcp-<server>
+#     name: '@deepseek-ai/dsh-mcp-client'
+#     config:
+#       transport: http
+#       serverName: <server>
+#       url: https://example.invalid/mcp
