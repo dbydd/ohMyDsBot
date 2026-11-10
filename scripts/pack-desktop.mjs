@@ -325,10 +325,7 @@ export async function compileOmdPlugins(repo, compiledRoot) {
     mkdirSync(dest, { recursive: true })
     const pkg = JSON.parse(readFileSync(join(plugin.dir, 'package.json'), 'utf8'))
     rewriteTree(plugin.dir, dest, esbuild)
-    for (const entry of readdirSync(plugin.dir, { withFileTypes: true })) {
-      if (entry.name === 'src' || entry.name === 'node_modules' || entry.name === 'tsconfig.json') continue
-      cpSync(join(plugin.dir, entry.name), join(dest, entry.name), { recursive: true })
-    }
+    copyOutsideSrc(plugin.dir, dest, esbuild)
     pkg.exports = rewriteExports(pkg.exports)
     writeFileSync(join(dest, 'package.json'), `${JSON.stringify(pkg, null, 2)}\n`)
     map.set(plugin.dir, dest)
@@ -380,6 +377,52 @@ function rewriteTree(sourceDir, destDir, esbuild) {
 export function rewriteTypeSpecifiers(code) {
   return code.replace(/(from\s+|import\s+|import\s*\(\s*)(['"])(\.\.?\/[^'"]+?)\.ts\2/g, '$1$2$3.js$2')
 }
+
+/**
+ * Copy everything that is not `src/` into the compiled tree. TypeScript outside
+ * `src/` (for example `ssot/spec.ts`) is emitted as `.js`, because compiled
+ * files under `dist/` rewrite `../../ssot/spec.ts` to `../../ssot/spec.js`.
+ * A raw copy would leave only the `.ts` file and the host would fail to import.
+ * @param {string} sourceDir
+ * @param {string} destDir
+ * @param {{ transformSync: Function }} esbuild
+ */
+export function copyOutsideSrc(sourceDir, destDir, esbuild) {
+  for (const entry of readdirSync(sourceDir, { withFileTypes: true })) {
+    if (entry.name === 'src' || entry.name === 'node_modules' || entry.name === 'tsconfig.json') continue
+    copyAndCompile(join(sourceDir, entry.name), join(destDir, entry.name), esbuild)
+  }
+}
+
+/**
+ * @param {string} from
+ * @param {string} to
+ * @param {{ transformSync: Function }} esbuild
+ */
+function copyAndCompile(from, to, esbuild) {
+  if (lstatSync(from).isDirectory()) {
+    mkdirSync(to, { recursive: true })
+    for (const entry of readdirSync(from, { withFileTypes: true })) {
+      copyAndCompile(join(from, entry.name), join(to, entry.name), esbuild)
+    }
+    return
+  }
+  if (from.endsWith('.ts') && !from.endsWith('.d.ts')) {
+    const transformed = esbuild.transformSync(readFileSync(from, 'utf8'), {
+      loader: 'ts',
+      format: 'esm',
+      target: 'node22',
+      sourcefile: from,
+    })
+    const out = to.replace(/\.ts$/, '.js')
+    mkdirSync(dirname(out), { recursive: true })
+    writeFileSync(out, rewriteTypeSpecifiers(transformed.code))
+    return
+  }
+  mkdirSync(dirname(to), { recursive: true })
+  cpSync(from, to)
+}
+
 
 /**
  * @param {unknown} exportsField
@@ -581,6 +624,13 @@ export function packedProblems(appDir) {
   if (!patch.includes('name: "@dbydd/omd-chat-shell"')) problems.push('packed overlay does not mount @dbydd/omd-chat-shell')
   if (!patch.includes('name: "@dbydd/omd-project-config"')) problems.push('packed overlay does not mount @dbydd/omd-project-config')
   if (!patch.includes('name: "@dbydd/omd-context-notes"')) problems.push('packed overlay does not mount @dbydd/omd-context-notes')
+  if (!patch.includes('name: "@dbydd/omd-hindsight"')) problems.push('packed overlay does not mount @dbydd/omd-hindsight')
+  if (!patch.includes('name: "@dbydd/omd-bot-wizard"')) problems.push('packed overlay does not mount @dbydd/omd-bot-wizard')
+  if (!patch.includes('name: "@dbydd/omd-tavern-assemble"')) problems.push('packed overlay does not mount @dbydd/omd-tavern-assemble')
+  if (!patch.includes('name: "@dbydd/omd-internal-tools"')) problems.push('packed overlay does not mount @dbydd/omd-internal-tools')
+  if (!existsSync(join(appDir, 'node_modules', '@dbydd', 'omd-hindsight', 'ssot', 'spec.js'))) {
+    problems.push('packed omd-hindsight is missing compiled ssot/spec.js')
+  }
   const host = readFileSync(join(appDir, 'src', 'host.mjs'), 'utf8')
   if (!host.includes('omdStackPatch()')) problems.push('packed host does not load the omd-full overlay')
   const client = readFileSync(join(appDir, 'node_modules', '@dbydd', 'omd-workbench', 'src', 'client', 'index.js'), 'utf8')

@@ -60,7 +60,19 @@
     "ds-bot": "link:../../ds-bot/ds-bot",
     "dsh-motion-ui": "link:../../external-plugins/dsh-motion-ui",
     "dsh-tool-lsp": "^0.1.2",
-    "@onlyne/lib": "^3.2.0"
+    "@onlyne/lib": "^3.2.0",
+    "@dbydd/omd-bot-wizard": "link:../../plugins/omd-bot-wizard",
+    "omd-bot-wizard": "link:../../plugins/omd-bot-wizard",
+    "@dbydd/omd-hindsight": "link:../../plugins/omd-hindsight",
+    "omd-hindsight": "link:../../plugins/omd-hindsight",
+    "@dbydd/omd-internal-http": "link:../../plugins/omd-internal-http",
+    "omd-internal-http": "link:../../plugins/omd-internal-http",
+    "@dbydd/omd-internal-tools": "link:../../plugins/omd-internal-tools",
+    "omd-internal-tools": "link:../../plugins/omd-internal-tools",
+    "@dbydd/omd-mcp-paths": "link:../../plugins/omd-mcp-paths",
+    "omd-mcp-paths": "link:../../plugins/omd-mcp-paths",
+    "@dbydd/omd-tavern-assemble": "link:../../plugins/omd-tavern-assemble",
+    "omd-tavern-assemble": "link:../../plugins/omd-tavern-assemble"
   },
   "dsh": {
     "profile": {

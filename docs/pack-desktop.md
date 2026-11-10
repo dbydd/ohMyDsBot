@@ -37,7 +37,9 @@ node scripts/pack-desktop.mjs                   # Linux：安装依赖并打出�
 node scripts/pack-desktop.mjs --dir --mac --publish never   # 在 Mac 上打 zip；不要在 Linux 上交叉编译
 ```
 
-插件源码是 TypeScript。桌面宿主的 Node 拒绝剥离 `node_modules` 里的类型，所以打包前会把每个插件的 `src/**/*.ts` 编成 `dist/**/*.js`，客户端本来就是 `.js`，原样带上。
+插件源码是 TypeScript。桌面宿主的 Node 拒绝剥离 `node_modules` 里的类型，所以打包前会把每个插件的 `src/**/*.ts` 编成 `dist/**/*.js`。`src/` 以外的 `.ts`（例如 `omd-hindsight` 的 `ssot/spec.ts`）也编成同路径的 `.js`：编译后的 `dist/core/config.js` 会去要 `../../ssot/spec.js`，只拷贝 `.ts` 会在启动时报找不到模块。客户端本来就是 `.js`，原样带上。
+
+`profiles/omd-full` 的 overlay 挂上日常栈里实际在用的宿主/客户端插件，包括 `omd-hindsight`（作曲家状态条）、`omd-bot-wizard`、`omd-tavern-assemble`、`omd-internal-tools`、`omd-internal-http`、`omd-mcp-paths`，并把界面语言偏好设成中文。不写入本机 provider 清单，也不写入密钥。
 
 默认产物：
 

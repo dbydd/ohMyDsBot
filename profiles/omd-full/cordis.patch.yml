@@ -86,6 +86,11 @@
     - id: omd-chat-shell
       name: "@dbydd/omd-chat-shell"
 
+# Bot 创建向导第 2 步：说明与分工、Linux 虚拟机沙箱策略。第 1 步仍归 DS-Bot 自己的创建对话框。
+- insert:
+    - id: omd-bot-wizard
+      name: "@dbydd/omd-bot-wizard"
+
 # 内部路径由 bundles 里的 `@dbydd/omd-internal-paths` 自己的 patch 插入，名字与包名一致。
 
 # 可视化：可视化子代理产出 `dsh-ui` 围栏，主 agent 只看源码卡或内联渲染。
@@ -191,6 +196,32 @@
 - insert:
     - id: omd-context-notes
       name: "@dbydd/omd-context-notes"
+    - id: omd-tavern-assemble
+      name: "@dbydd/omd-tavern-assemble"
+
+# 记忆库：Hindsight 状态条、Banks / Retain Queue，以及 hindsight:// 路径。
+# 密钥不写在这里；连不上服务时状态条显示异常，不把凭据打进包。
+- insert:
+    - id: omd-hindsight
+      name: "@dbydd/omd-hindsight"
+      config:
+        banks:
+          coding:
+            description: "Engineering conclusions, decisions and pitfalls for this
+              workspace"
+            access: read-write
+            retain: auto
+        defaultBank: coding
+
+# 工具面收成一个语义入口：动作经 judge 判定，再按 internal path 执行。
+- insert:
+    - id: omd-internal-tools
+      name: "@dbydd/omd-internal-tools"
+      config:
+        toolName: resource
+        passthrough: [ read, write, edit, bash, hindsight, ask_user, message_bot ]
+        confidenceGate: 0.35
+        cacheTtlMs: 300000
 
 # Onlyne 总线，然后是沙箱驱动和算力节点。租约申请发给 urn:onlyne:agent:compute；
 # 真正创建机器的是收到报文的那个节点上的驱动（当前是 omd-sandbox-vm / orbctl）。
@@ -203,3 +234,28 @@
       name: omd-compute
     - id: omd-issue-runner
       name: omd-issue-runner
+    - id: omd-internal-http
+      name: "@dbydd/omd-internal-http"
+    - id: omd-mcp-paths
+      name: "@dbydd/omd-mcp-paths"
+      config:
+        serverName: magpie
+        transport: stdio
+        command: magpie
+        args: [ mcp, image ]
+        sampling:
+          provider: magpie
+          model: group/labor
+
+# 界面默认中文，和本机日常 omd-full 一致。用户仍可在设置里改。
+- id: locale
+  name: "@deepseek-ai/dsh-client-locale"
+  config:
+    preference: zh
+
+# 日常会话默认 standard；选择器里可以切到 cordis。
+- id: agent-preset-registry
+  name: "@deepseek-ai/dsh-agent-preset-registry"
+  config:
+    default: standard
+    selectedDefault: cordis
