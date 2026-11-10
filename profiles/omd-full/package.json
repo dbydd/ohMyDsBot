@@ -60,6 +60,7 @@
     "ds-bot": "link:../../ds-bot/ds-bot",
     "dsh-motion-ui": "link:../../external-plugins/dsh-motion-ui",
     "dsh-tool-lsp": "^0.1.2",
+    "@deepseek-ai/dsh-experimental-inspector-profile": "0.2.2-rc.1",
     "@onlyne/lib": "^3.2.0",
     "@dbydd/omd-bot-wizard": "link:../../plugins/workbench/omd-bot-wizard",
     "omd-bot-wizard": "link:../../plugins/workbench/omd-bot-wizard",
@@ -80,6 +81,7 @@
         "@deepseek-ai/dsh-base",
         "@deepseek-ai/dsh-web-app",
         "@deepseek-ai/dsh-experimental-voice-input-bundle",
+        "@deepseek-ai/dsh-experimental-inspector-profile",
         "ds-bot",
         "dsh-motion-ui",
         "@dbydd/omd-internal-paths"

@@ -31,9 +31,9 @@ flowchart TD
 
 4. **插件默认值机器无关**：网关地址、绝对路径、凭据、个人模型 id 只出现在 profile 的 patch 里。插件 `Config` 的默认值只表达"没配置时是什么状态"。
 
-| Profile | `dsh.profile.bundles` 声明顺序 | 用途 |
-|---|---|---|
-| `omd` | `["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app"]` | 上游 Web 组合加逐项定制；`dsh --profile omd --no-open` 起服务 |
+| Profile | 用途 |
+|---|---|
+| `omd-full` | 唯一组合，含修改过的 `ds-bot`。bundle 以 `profiles/omd-full/package.json` 为准。`dsh --profile omd-full --no-open` 起服务 |
 
 ---
 
@@ -188,7 +188,7 @@ flowchart TD
 1. **`pnpm` 12 拒绝带未批准构建脚本的安装**：报 `ERR_PNPM_IGNORED_BUILDS`，指针是 `sharp@0.33.5`（`dsh-browser-tool` 的依赖）。
    - **解法**：`cd $DSH_HOME/profiles/<p> && pnpm approve-builds sharp`。它会把批准写进该 profile 的 `pnpm-workspace.yaml`（`allowBuilds: { sharp: true }`），之后 `dsh plugin add` 才放行。**`onlyBuiltDependencies` 这个旧键在 12 里不生效。**
 
-2. **`remove` 会重新解析整份 lockfile**：某个带未发布传递依赖的包（本机实测 `@deepseek-ai/dsh-type-meta` 404）会让 `dsh plugin --profile omd remove …` 直接失败，而同一 profile 的 `add` 却成功。
+2. **`remove` 会重新解析整份 lockfile**：某个带未发布传递依赖的包（本机实测 `@deepseek-ai/dsh-type-meta` 404）会让 `dsh plugin --profile omd-full remove …` 直接失败，而同一 profile 的 `add` 却成功。
    - **解法**：先做完全部需要的 `add`，再 `remove`；安装动作会先刷新 lockfile，之后 `remove` 就不再需要联网解析那条缺失项。
 
 3. **peer 版本门禁会静默禁用行**：dsh 启动时校验每个插件的 `peerDependencies` 是否覆盖运行时的 `0.2.1-rc.2`。不覆盖就打印 `dsh: disabling profile plugin row "<id>"` 并禁用该行。

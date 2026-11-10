@@ -2,14 +2,14 @@
 
 目标：把 tern-obsidian 的**解析、索引、查询**搬进宿主插件，把**渲染**落在我们自己的右侧栏 tab 类型上；模型侧与界面侧共用同一个地址 `dsh-resource://vault/<vaultId>/<rel>`（模型可写简写 `vault://<vaultId>/<rel>`）。
 
-调研范围（全部只读）：参考实现本机 `tern-obsidian/tern-obsidian/` 检出；目标侧 `plugins/`、`docs/omd-*.md`、`profiles/omd/cordis.patch.yml`、`refs/deepseek-harness/packages/client|fs/`。
+调研范围（全部只读）：参考实现本机 `tern-obsidian/tern-obsidian/` 检出；目标侧 `plugins/`、`docs/omd-*.md`、`profiles/omd-full/cordis.patch.yml`、`refs/deepseek-harness/packages/client|fs/`。
 标记：`[观察]` = 代码或文档里读到的事实；`[推断]` = 我的判断、或需要实测的数字。
 
 ## 0. 三个前置事实，会改变结论
 
 1. `[观察]` 模型侧今天还读不了内部路径：`plugins/host/omd-read/src/index.ts:289-296` 仍然 `ctx.provide('readSchemes', …)`，`plugins/host/omd-internal-paths` 是仓库里唯一提到 `internalPaths` 的包，且没有任何源注册。`docs/omd-internal-paths.md:51-56` 写明了迁移步骤。不先做这一步，`vault://` 只存在于界面侧。
 2. `[观察]` 客户端桥接只吐一帧：`plugins/host/omd-internal-paths/src/client/index.js:99-116` 的 `open` yield 一次就返回，而 `live` 源“界面侧跟随变化”的承诺写在 `src/service.ts:34-35` 与 `docs/omd-internal-paths.md:47`，尚未实现。所以笔记的内容刷新不能指望资源流，必须自带轮询或手动刷新。
-3. `[观察]` `profiles/omd/cordis.patch.yml` 里没有 `omd-internal-paths` 行，最后一个 insert 块到 `omd-chat-shell` 为止。挂载本身是 P0 的一部分。
+3. `[观察]` `profiles/omd-full/cordis.patch.yml` 里没有 `omd-internal-paths` 行，最后一个 insert 块到 `omd-chat-shell` 为止。挂载本身是 P0 的一部分。
 
 ## 1. 能力清单
 
@@ -195,9 +195,9 @@ P1 到 P3 之间不依赖重建：每阶段关掉行就回滚干净（`ctx.effec
 
 ## 9. 验收
 
-1. 组合面：`dsh --profile omd --dump-config` 输出里有 `omd-internal-paths` 与 `omd-vault` 两行；stderr 为空；退出码 0。
+1. 组合面：`dsh --profile omd-full --dump-config` 输出里有 `omd-internal-paths` 与 `omd-vault` 两行；stderr 为空；退出码 0。
 2. 模型侧原文：`dsh headless --patch /tmp/omd-vault-row.yml "read vault://notes/Daily/2026-10-22.md and quote its first heading"`，期望模型引用的标题与磁盘上的文件逐字一致，且工具入参里出现的是 `vault://` 而不是绝对路径。
-3. 界面侧同址：`dsh --profile omd` 起网页，右侧栏指南里的 Vault 入口挑一篇，期望 tab 标题是文件名、正文是文档排版、属性与标签各成一段；再确认 tab 记录里存的是 `dsh-resource://vault/notes/…`。
+3. 界面侧同址：`dsh --profile omd-full` 起网页，右侧栏指南里的 Vault 入口挑一篇，期望 tab 标题是文件名、正文是文档排版、属性与标签各成一段；再确认 tab 记录里存的是 `dsh-resource://vault/notes/…`。
 4. 排除规则：库根 `.gitignore` 写入 `raw/`，`vault://notes/raw/secret.md` 读取失败并说明命中的规则名；同一路径用绝对路径读仍然成功（我们只拦 vault 地址）；`userIgnoreFilters` 命中的文件在搜索里消失、按精确地址仍可读。
 5. 索引预算：`node --experimental-strip-types -e "…"` 直接调 P2 的构建函数跑真实库，期望 3 000 篇冷建 ≤ 3 秒、二次（指纹全命中）≤ 0.4 秒且 `reread = 0`、进程 RSS 增量 ≤ 60 MB；超出就把数字写进文档并改预算，不改代码迁就。
 6. 无构建步骤：改完 `src/client/index.js` 直接重启 `dsh`，浏览器控制台没有 `require(...) missed the module table`；仓库 `git status` 里不出现任何构建产物。

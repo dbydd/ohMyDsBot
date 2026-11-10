@@ -110,7 +110,7 @@ bank 段接受角色别名 `coding`/`user`，解析到实际 `bankId`（角色�
 
 ## 5. 配置 schema（profile 层，`Volatile` 即可在 Settings 表单里改）
 
-包内默认值只表达"没配置时是什么状态"，不含任何本机事实：地址空、bank 空、凭据名只给通用变量名。本机取值（网关地址、真实 bank id、`projectId` 钉值）一律落在 `$DSH_HOME/profiles/omd/cordis.patch.yml` 的 `omd-memory` 行；仓库副本 `profiles/omd/cordis.patch.yml` 里也不写个人值（`AGENTS.md:88-96`）。
+包内默认值只表达"没配置时是什么状态"，不含任何本机事实：地址空、bank 空、凭据名只给通用变量名。本机取值（网关地址、真实 bank id、`projectId` 钉值）一律落在 `$DSH_HOME/profiles/omd-full/cordis.patch.yml` 的 `omd-memory` 行；仓库副本 `profiles/omd-full/cordis.patch.yml` 里也不写个人值（`AGENTS.md:88-96`）。
 
 | 字段 | 类型 / 默认 | volatile | 说明 |
 |---|---|---|---|
@@ -162,13 +162,13 @@ bank 段接受角色别名 `coding`/`user`，解析到实际 `bankId`（角色�
 
 前置：Hindsight 可达（`@vectorize-io/hindsight-client` 的 `health()` 成功，或 `curl -s "$BASE/health"` 返回 2xx；端点以服务端实际部署为准），`dsh --version` 为 0.2.1-rc.2。
 
-1. **装载**：`dsh plugin --profile omd add ./plugins/archived/omd-memory` → `dsh --profile omd` 启动无插件加载错误，工具表里出现 `recall`/`retain`/`reflect`；`$DSH_HOME/profiles/omd/cordis.patch.yml` 里出现 `omd-memory` 段，`config.baseUrl` 已填，Magpie 的 `llm-pi-ai` 段未被触碰。
+1. **装载**：`dsh plugin --profile omd-full add ./plugins/archived/omd-memory` → `dsh --profile omd-full` 启动无插件加载错误，工具表里出现 `recall`/`retain`/`reflect`；`$DSH_HOME/profiles/omd-full/cordis.patch.yml` 里出现 `omd-memory` 段，`config.baseUrl` 已填，Magpie 的 `llm-pi-ai` 段未被触碰。
 2. **配置缺失不炸**：临时把 `baseUrl` 置空重启 → 启动成功，记忆工具仍注册但调用返回"未配置"错误；会话正常结束。
 3. **`memory://` 读取**：会话里让模型 `read` `memory://bank/coding` → 返回 bank profile 与 stats，而不是"unknown resource scheme"；`read` `memory://queue` → 输出 pending 计数。
 4. **retain→recall 往返**：同一会话说"记一下：这个仓库的发布分支叫 release-x"→ 等 1 个 flush 周期 → `cat $DSH_HOME/memory/retain-queue.jsonl` 该行为空（已投递）→ 新开会话问"发布分支叫什么" → 首轮上下文出现 `<hindsight-memory>` 且含该事实。
 5. **召回不回流**：在含召回块的会话继续对话 → 库里该 document 的内容不含 `<hindsight-memory>` 字样（`curl` recall 或 `memory://recall` 自查）。
 6. **离线不阻塞轮次**：把 `baseUrl` 指向死端口 → 提一句、等一轮结束 → 轮次正常关闭（无长等），队列文件新增一条 valid job，`.dead.jsonl` 为空。
-7. **退出不被队列拖住**：`time dsh --profile omd` 起会话、说一句、退出 → 退出耗时 < `shutdownFlushMs` + 3s，job 留在盘上而非丢失。
+7. **退出不被队列拖住**：`time dsh --profile omd-full` 起会话、说一句、退出 → 退出耗时 < `shutdownFlushMs` + 3s，job 留在盘上而非丢失。
 8. **恢复投递**：改回正确 `baseUrl` 重启 → 30s 内队列排空；`.dead.jsonl` 仍为空。
 9. **项目覆盖生效**：给当前项目写入 `recallMaxTokens: 200` → 同会话下一轮召回请求的 `max_tokens` 为 200（`ctx.logger` 或 `memory://recall?...` 观察）；删掉记录 → 回到 profile 值。
 10. **子目录不串项目**：在同一 workspace 的子目录开会话 → `project:` tag 与父目录会话一致（同 git remote），`memory://bank/coding` 不变。

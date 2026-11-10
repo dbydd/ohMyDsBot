@@ -12,7 +12,7 @@
 - 现有渲染口径（必须对齐）：`refs/deepseek-harness/packages/jobs/tool-jobs/src/index.ts:360-363`（名册行 `<id> [<kind>] <status> — <label>`，空为 `(no background jobs)`）、`render.ts:76-83`（丢弃 `log` 通道、stderr 归到 `[stderr]`、丢失字节时给 spill 提示）、`render.ts:56-60`（`[status: …, <detail>]`）。
 - `ctx.terminals`：`refs/deepseek-harness/packages/terminal/terminal/src/index.ts:105-137`；`list(owner):308`、`read(owner,id,{offset,count}):263`、`kill:285`、`signal:274`；快照 `types.ts:133-145`、回滚页 `types.ts:103-123`；id 形状 `pty-<n>`（`index.ts:166`）。围栏是 `Agent` 对象同一性（`:310`），不是字符串。
 - 内部路径契约：`plugins/host/omd-internal-paths/src/service.ts:22-45`（`InternalExec` 今天只有 `signal`）、`parse.ts:17-18`（源名 `[a-z0-9-]+`）。
-- 组合事实：`ctx.jobs` 恒在（`refs/deepseek-harness/packages/bundle/base/cordis.patch.yml:96-97`、`:289-290`）；terminal 是可选行，只在 `plugins/archived/omd-core/cordis.patch.yml:98-105`，profile 的 patch 里没有——所以 terminal 半边默认休眠，不能假设它在。`omd-internal-paths` 那行已经挂在 `profiles/omd/cordis.patch.yml:83-86`（`~/.dsh/profiles/omd` 同步有，`--dump-config` 退出 0、stderr 空），不需要再加。
+- 组合事实：`ctx.jobs` 恒在（`refs/deepseek-harness/packages/bundle/base/cordis.patch.yml:96-97`、`:289-290`）；terminal 是可选行，只在 `plugins/archived/omd-core/cordis.patch.yml:98-105`，profile 的 patch 里没有——所以 terminal 半边默认休眠，不能假设它在。`omd-internal-paths` 那行已经挂在 `profiles/omd-full/cordis.patch.yml:83-86`（`~/.dsh/profiles/omd-full` 同步有，`--dump-config` 退出 0、stderr 空），不需要再加。
 
 ## 2. 地址语法
 ```
@@ -66,9 +66,9 @@ dsh-resource://proc/<id>/output     单条详情去掉头部，只有作业输�
 1. 前置：`ReadMigration` 正在做 `plugins/host/omd-read/src/index.ts:289-299` 删 `readSchemes`、改 `inject: ['internalPaths']`、读地址走 `ctx.internalPaths.read(address, { signal, agent: exec.agent, cwd })`（`docs/omd-internal-paths.md:51-56` 第 2、3 步）；proc 不重复做，只等它落地。profile 那行已就位。
 2. `plugins/host/omd-internal-paths/src/service.ts:22-26`：`InternalExec` 加 `agent?: Agent` 与 `cwd?: string`（type-only import `@deepseek-ai/dsh-agent`），注释写清"agent = 归属围栏；cwd = 相对地址解析；两者都可缺"。`InternalSource` 的宿主侧 `locate?(path, exec): Promise<string | undefined>` 与这两字段同一次改完（artifact 要复用 read 的文件分支），**不进** `markRemoteMethods`（`service.ts:187-190`）；proc 不实现它，`locate` 缺省时 read 走文本分支，窗口行为不变。
 3. 新建 `plugins/omd-proc/`：`package.json`（peer: `@deepseek-ai/dsh-jobs`、`@deepseek-ai/dsh-terminal`、`@deepseek-ai/dsh-agent`、`omd-internal-paths`）、`src/index.ts`（`inject: ['internalPaths']`，`ctx.get('jobs')` / `ctx.get('terminals')` 在**读取时**取，注册 `proc`）、`src/render.ts`（名册/头部/正文三个渲染器，口径抄 `tool-jobs/src/render.ts`）。`Config` 为空对象：可调项已经分别在 read 工具（`maxBytes`/`maxLines`）与 `jobs-local`（`retainBytes`/`settledRetainBytes`）上，proc 不再造第二份。
-4. `profiles/omd/cordis.patch.yml` 只追加 `omd-proc` 一行 insert（`omd-internal-paths` 已有，见 §1），`dsh plugin --profile omd add plugins/omd-proc` 建 link。每个源插件各带自己的行，别把行挂在别的源的切片里。
+4. `profiles/omd-full/cordis.patch.yml` 只追加 `omd-proc` 一行 insert（`omd-internal-paths` 已有，见 §1），`dsh plugin --profile omd-full add plugins/omd-proc` 建 link。每个源插件各带自己的行，别把行挂在别的源的切片里。
 5. 验收：
-   - `dsh --profile omd --dump-config` 退出码 0、stderr 为空；启动日志无 `did not activate`。
+   - `dsh --profile omd-full --dump-config` 退出码 0、stderr 为空；启动日志无 `did not activate`。
    - `bash("npx vite", run_in_background: true)` 后 `read("proc://")` 出现同一 id，行与 `job_list` 逐字相同。
    - `read("proc://bash-<id>")` 后再 `job_output(job_id)` 仍拿到完整增量（游标未被路径推进），完成通知仍到达。
    - `read("proc://bash-<id>/output")` 等于该详情的正文部分；`read("proc://nope")` 报第 3 节的错误且不带名册以外的信息。

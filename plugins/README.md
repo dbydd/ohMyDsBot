@@ -65,8 +65,9 @@ flowchart LR
 unscoped package names, and are not published to npm. Each is a `link:`
 dependency of a dsh profile. Mount one by adding the row in its
 `cordis.patch.yml`, or with `dsh plugin --profile <profile> add <directory>` —
-each declares `dsh.bundle`. They are not part of `profiles/omd`'s npm
-composition. `archived/onlyne-bridge` is not in this repository.
+each declares `dsh.bundle`. `profiles/omd-full` links them from this
+checkout; they are not an npm composition. `archived/onlyne-bridge` is not in
+this repository.
 
 | package | what it is |
 |---|---|
@@ -114,7 +115,7 @@ State that no existing event can carry lives in process memory and says so in it
 
 ```sh
 node plugins/link-host-runtime.mjs                 # host packages from the interception layer
-node plugins/link-host-runtime.mjs --from-profile omd
+node plugins/link-host-runtime.mjs --from-profile omd-full
 ```
 
 The second list matters for `omd-lsp-nav` and `omd-ast-edit`: they import `dsh-tool-lsp` / `dsh-tool-ast-grep` internals, which a *profile* installs rather than the shared layer. The in-tree list exists for the same reason: `omd-todo-driver` imports `omd-todo` and `omd-judge-context` by package name, and those names have to resolve from the importer's real path. The Onlyne packages are on that list too: `omd-compute` and `omd-issue-runner` import `omd-onlyne`, `omd-internal-paths`, and `omd-sandbox-vm` by package specifier. `@onlyne/lib` is not linked from a checkout; the same script installs `^3.2.0` from npm.
@@ -146,14 +147,14 @@ A plugin that throws in `apply` is **not** fatal: the boot prints `N entries did
 
 ## Previous checks of the saved plugins
 
-These checks describe the earlier composition. They do not indicate that a plugin is currently enabled.
+These checks describe the removed web-only profile. They do not indicate that a plugin is currently enabled, and they are not a command to run against `omd-full`.
 
 | claim | evidence |
 |---|---|
-| The host layer boots clean | `dsh --profile omd` reports no `entries did not activate` and no `disabling profile plugin row`. |
+| The host layer boots clean | The removed profile reported no `entries did not activate` and no `disabling profile plugin row`. |
 | The judge reaches the real gateway | `dsh --profile omdh "Call the judge tool …"` returned `Value: 0.0093`, a calibrated `noul` from `POST /v1/systemone` (the gateway answered as `clef-flash`). |
 | The notebook is projection-backed and prompt-visible | In one headless turn: write → `Context notes updated (17 bytes).`; read → the exact notebook text; the system prompt reported `Latest notebook revision (17 bytes): - probe: one line`. |
 | Empty results are evicted before truncation | The same turn ran a `grep` with no matches and received exactly `(evicted: empty result)`. |
-| The single profile composes and serves | `dsh --profile omd --dump-config` exits 0 with 2,077 composed lines and no stderr; `agent-default-model` is patched by the profile's own file, while `web`, `webserver`, `ui-settings-general`, and every `omd-*` row come from the bundle layers. `dsh --profile omd --no-open --port 0` boots with no `entries did not activate` and answers `401` at `/` without the token. |
+| The single profile composes and serves | That removed profile's `--dump-config` exited 0 with 2,077 composed lines and no stderr; `agent-default-model` was patched by the profile's own file, while `web`, `webserver`, `ui-settings-general`, and every `omd-*` row came from the bundle layers. A boot with `--no-open --port 0` had no `entries did not activate` and answered `401` at `/` without the token. |
 
 Static type-checking of these packages is **not** a gate here. Per-package `tsc` runs against the published `@deepseek-ai/cordis` typings, which omit the `ctx.provide` / `ctx.effect` members the runtime actually exposes, and against duplicate `zod` copies that make structural comparison fail. The check that counts is booting the profile and driving a real turn.

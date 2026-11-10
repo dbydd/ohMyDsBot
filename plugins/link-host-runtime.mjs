@@ -221,7 +221,7 @@ const flagIndex = process.argv.indexOf('--dsh-home')
 const dshHome = flagIndex >= 0 ? process.argv[flagIndex + 1] : process.env.DSH_HOME
 const layer = interceptionLayer(dshHome)
 const profileFlag = process.argv.indexOf('--from-profile')
-const profile = profileFlag >= 0 ? process.argv[profileFlag + 1] : 'omd'
+const profile = profileFlag >= 0 ? process.argv[profileFlag + 1] : 'omd-full'
 const profileModules = join(dirname(layer), profile, 'node_modules')
 
 /**

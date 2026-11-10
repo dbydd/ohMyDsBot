@@ -95,7 +95,7 @@ source: { kind: issue, repo: onlyne/onlyne, number: 412 }
 第二阶段：导入（监听 + 补丁合并 + 按条目隔离 + dirty）与看板写操作（拖、勾、加）。协作闭环在这里成立。
 第三阶段：看板改文字/删除/重排、issue 来源徽标、按 detail `seq` 恢复。
 
-验收（临时 profile，不改 `~/.dsh/profiles/omd`，见 `AGENTS.md:295`）：
+验收（临时 profile，不改 `~/.dsh/profiles/omd-full`，见 `AGENTS.md:295`）：
 
 1. `dsh --profile omd-slice-verify --dump-config` 退出码 0、stderr 为空。
 2. 一次 `todo` 调用后 `find ~/.dsh/todos/<sessionId> -name item.md` 的条目数与工具入参一致；三个层级各自成目录。

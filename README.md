@@ -17,9 +17,7 @@ ohMyDsBot/
 │   ├── npm-packages/        安装 @onlyne/lib 的位置
 │   ├── link-host-runtime.mjs
 │   └── README.md            每个包做什么
-├── profiles/
-│   ├── omd/                 发布用 Web 组合，依赖 npm 上的 @dbydd/*
-│   └── omd-full/            开发用桌面组合，link: 指向本仓库
+├── profiles/omd-full/       唯一组合：钉死的 ds-bot + 本仓库插件
 ├── scripts/                 pack-desktop.mjs、publish-all.mjs、path
 ├── docs/                    设计说明。打包见 docs/pack-desktop.md
 ├── design/                  Quint / VDM-SL / LikeC4
@@ -42,17 +40,17 @@ cd external-plugins/dsh-motion-ui && pnpm install --prod --ignore-scripts --lock
 node plugins/link-host-runtime.mjs
 ```
 
-`link-host-runtime.mjs` 把宿主运行时和兄弟插件链进 `plugins/node_modules`。它要一份已经启动过的 dsh profile（默认 `~/.dsh`）；没有的话先 `dsh --profile omd --no-open` 一次，或传 `--dsh-home <dir>`。
+`link-host-runtime.mjs` 把宿主运行时和兄弟插件链进 `plugins/node_modules`。它要一份已经启动过的 dsh（默认 `~/.dsh`）；没有的话先起一次下面的 profile，或传 `--dsh-home <dir>`。
 
-开发 profile 是 `profiles/omd-full`。里面的 `link:` 相对这个目录，把目录复制到别处链接就断了。用符号链接挂进 dsh，这样不改共享的 `omd` profile，仓库里也不写密钥或本机 provider 行：
+仓库里只有 `profiles/omd-full`。它带修改过的 ds-bot、语音输入、会话检查器，以及本仓库的插件。`link:` 相对这个目录，符号链接挂进 dsh，profile 名保持 `omd-full`：
 
 ```sh
 mkdir -p "${DSH_HOME:-$HOME/.dsh}/profiles"
-ln -sfn "$PWD/profiles/omd-full" "${DSH_HOME:-$HOME/.dsh}/profiles/omd-dev"
-dsh --profile omd-dev --no-open    # Web UI 默认 http://127.0.0.1:3080
+ln -sfn "$PWD/profiles/omd-full" "${DSH_HOME:-$HOME/.dsh}/profiles/omd-full"
+dsh --profile omd-full --no-open    # Web UI 默认 http://127.0.0.1:3080
 ```
 
-`profiles/omd` 是给别人用的 Web 组合，插件来自 npm。判官的 `candidates` 与 `endpoints` 在仓库里是占位；本机取值写在自己的 `$DSH_HOME/profiles/omd/cordis.patch.yml`，不配则判官工具不注册。
+判官的 `candidates` 与 `endpoints` 在 patch 里是占位。不配则判官工具不注册。密钥和本机 provider 清单写在应用自己的数据目录，不写进仓库。`dsh-profile-omd` 没有上过 npm；插件仍以 `@dbydd/omd-*` 发布，给这一份组合用。
 
 ## 测试
 

@@ -186,7 +186,7 @@ DS-Bot 的 `DetailsDrawer` 用 `h(pluginTab.component, { sessionId, subjectId, b
 
 ## 组合
 
-`profiles/omd`（无 DS-Bot）只挂宿主壳；`profiles/omd-full`（含 `ds-bot` bundle）才看得到抽屉页签。内部路径需要 `omd-internal-paths` 在场；它不在场时插件只注册路由。
+唯一组合是 `profiles/omd-full`，bundle 里有 `ds-bot`，抽屉页签在这份组合里出现。内部路径需要 `omd-internal-paths` 在场；它不在场时插件只注册路由。
 
 ## 尚未做的部分
 

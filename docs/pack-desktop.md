@@ -70,6 +70,8 @@ DS_BOT_HOME=<空目录> DS_BOT_SHELL_DATA=<另一空目录> \
 - Bot 详情抽屉里有笔记页签，酒馆页签在；Onlyne 网络页签在 `omd-onlyne` 挂上之后出现。
 - 数据目录里没有从包里带出来的 `.credentials.yaml`。模型密钥在应用的数据目录里另配。
 
-`profiles/omd` 是不带 ds-bot 的 Web 组合，行的 `name` 已经是包名。它的皮肤客户端 id 以前仍是 `omd-skin`，和 `@dbydd/omd-skin` 不一致，同一条规则下也会被丢掉。现在和 omd-full 一样对齐了。
+仓库里只有这一份 profile。早先那份不带 ds-bot 的 `profiles/omd` 已删，它的包也没有上过 npm。
 
-`dsh-motion-ui` 0.8.9 只声明兼容到 dsh 0.2.1-rc.5。钉死的桌面宿主是 dsh 0.2.2-rc.1，把它放进「必须加载」的 bundle 列表会让宿主直接退出。包仍会装进应用，但不进这份桌面的 bundle 列表。要在 0.2.2 上用动效，需要一份声明了该运行时的 motion-ui，或按 dsh 的提示做精确版本豁免后再自己加回 bundle。
+`@deepseek-ai/dsh-experimental-inspector-profile` 钉在 `0.2.2-rc.1`，和桌面宿主同一个版本。它的 manifest 没有 `engines.dsh`，peer 也只有 `@deepseek-ai/cordis`，不是 `@deepseek-ai/dsh-*`。`dsh-app-boot` 的 `evaluatePluginCompatibility` 只拿 `engines.dsh` 或 `@deepseek-ai/dsh-*` peer 去对运行时版本，所以这份检查器不会因为版本被跳过，可以留在「必须加载」的 bundle 列表里。
+
+`dsh-motion-ui` 0.8.9 的 `@deepseek-ai/dsh-tools` / `dsh-home-paths` peer 只到 0.2.1-rc.5。钉死的桌面宿主是 dsh 0.2.2-rc.1，把它放进「必须加载」的 bundle 列表会让宿主直接退出。包仍会装进应用，但不进这份桌面的 bundle 列表。要在 0.2.2 上用动效，需要一份声明了该运行时的 motion-ui，或按 dsh 的提示做精确版本豁免后再自己加回 bundle。

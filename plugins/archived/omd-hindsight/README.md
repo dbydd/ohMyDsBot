@@ -6,7 +6,7 @@ kind: reference
 > the omp deployment, and the auto-recall path costs context every turn. Memory
 > will be redesigned from scratch; this file stays as a record of what was tried
 > and of the Hindsight server contract (banks, recall budgets, prefetch), not as
-> something to install. `dsh plugin --profile omd add …` on it again only if you
+> something to install. `dsh plugin --profile omd-full add …` on it again only if you
 > are deliberately reviving this version.
 
 # omd-hindsight

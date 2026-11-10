@@ -79,10 +79,10 @@ chip 是 Lexical decorator 节点，只活在编辑器里；模型的形态只�
 
 前置依赖（不属本切片）：`omd-github` 的 `ctx.github` 与 `issue` 源、`omd-project-config` 的 `repoBinding` 字段与方法、`omd-internal-paths` 的源桥，以及 `omd-read` 从 `ctx.readSchemes` 迁到 `ctx.internalPaths`（`docs/omd-internal-paths.md` §5 那一片，连同 profile 里的挂载行）。缺任一，本包的宿主半边不激活，`@` 里就没有 issue 组。
 
-验收（临时 profile，绝不改 `~/.dsh/profiles/omd`，AGENTS.md:295）：
+验收（临时 profile，绝不改 `~/.dsh/profiles/omd-full`，AGENTS.md:295）：
 
 ```sh
-cp -R ~/.dsh/profiles/omd ~/.dsh/profiles/omd-slice-verify
+cp -R ~/.dsh/profiles/omd-full ~/.dsh/profiles/omd-slice-verify
 dsh plugin --profile omd-slice-verify add ./plugins/omd-issue-mention
 dsh --profile omd-slice-verify --dump-config > /dev/null   # 退出码 0
 dsh --profile omd-slice-verify                             # 无 "did not activate"

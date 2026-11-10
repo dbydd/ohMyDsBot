@@ -97,7 +97,7 @@ github 源的地址语法由它自己定，这里只约定取绑定：`await ctx
 cd refs/deepseek-harness && node --import tsx/esm --input-type=module -e '
 const m = await import("<repo root>/plugins/workbench/omd-project-config/src/repo.ts")
 for (const s of ["https://github.com/deepseek-ai/deepseek-harness.git","https://github.com/Scorp1o117/dsh-motion-ui.git","git@github.com:o/n.git","ssh://git@github.com:22/o/n.git","https://user:token@github.com/o/n","git@github-work:team/infra.git","/tmp/mirror.git","https://ghe.corp.example/team/infra.git"]) console.log(s, "->", m.parseRepoRef(s))'
-dsh --profile omd --dump-config   # 退出码 0、stderr 空（不改 profile）
+dsh --profile omd-full --dump-config   # 退出码 0、stderr 空（不改 profile）
 ```
 
 界面：本仓根打开面板 → `repo` 组显示"未绑定 · 没有 origin"；`refs/deepseek-harness` 的 cwd → 显示 origin 推导值 + `[使用]`；点它并保存 → 来源变"来自个人覆盖"；填 `ghe.corp.example/x/y` 保存成功；填 `github-work:x/y` 报 `expected "[host/]owner/name"`；手写坏 slug 到 `.omd/config.json` → 面板错误带文件路径。

@@ -86,7 +86,7 @@ interface CheckResult { slug: string | null; checkedAt: string; added: number; u
 2. **状态与调度**：`storage.ts`（`omd_issue_watch` 域、`watches` 表、500 条淘汰）、`timer.ts`（单 timer、每 root 单飞、退避）、`writer.ts`（读旧条目 → 按 id 合并 → `todoList.replace(session, items, 'issue')`）、`index.ts`（`inject: ['github','projectConfig','storageDomain']`，发布 `ctx.issueWatch`）。
 3. **接入**：`schema.ts` 增 5 字段；client 半边照 `plugins/workbench/omd-project-config/src/client/index.js:528-535` 加 `/issues-check`（action）与"主会话"选择器。依赖顺序：待办能力（无唤醒写 + origin 合并）→ `github` 源与仓库绑定（含 `state:'all'` 与 `truncated`）→ 本切片；`omd-read` 迁移只影响模型能否 `read issue://N` 看正文，不在关键路径。
 
-验收（临时 profile，不改 `~/.dsh/profiles/omd`，见 `AGENTS.md:295`）：
+验收（临时 profile，不改 `~/.dsh/profiles/omd-full`，见 `AGENTS.md:295`）：
 
 ```sh
 dsh --profile omd-watch-verify --dump-config     # 退出码 0，stderr 空，无 "did not activate"

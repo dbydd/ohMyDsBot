@@ -51,7 +51,7 @@ test('the client graph names match the package name', () => {
   assert.equal(moduleLoaderId("window.__ModuleLoader__.load({\n  id: '@dbydd/omd-skin',\n"), '@dbydd/omd-skin')
 })
 
-test('omd and omd-full rows name real packages and carry no secrets', () => {
+test('omd-full rows name real packages and carry no secrets', () => {
   assert.deepEqual(profileProblems(), [])
   assert.deepEqual(secretProblems(), [])
 })
@@ -61,6 +61,7 @@ test('the pack plan pins the modified ds-bot and aliases unscoped imports', () =
   assert.deepEqual(plan.problems, [])
   assert.equal(plan.bundles.includes('ds-bot'), true)
   assert.equal(plan.bundles.includes('@dbydd/omd-internal-paths'), true)
+  assert.equal(plan.bundles.includes('@deepseek-ai/dsh-experimental-inspector-profile'), true)
   const skin = plan.aliases.find(item => item.alias === 'omd-skin')
   assert.equal(skin?.target, '@dbydd/omd-skin')
   assert.equal(plan.canonical.some(item => item.name === 'ds-bot'), true)

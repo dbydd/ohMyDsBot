@@ -3,7 +3,7 @@
 ## 结论
 
 `omd` 的 profile 里写着 `dsh.profile.patchReload: live`。Loader 因此监视
-`~/.dsh/profiles/omd/cordis.patch.yml`：手写一行 `insert`，HMR 在现场重组，
+`~/.dsh/profiles/omd-full/cordis.patch.yml`：手写一行 `insert`，HMR 在现场重组，
 新 fiber 几秒内挂上，当前会话的工具表立刻能看到；删掉这一行，fiber 逆序卸载，
 patch 回到原样。整个过程不需要重启进程。
 
@@ -42,10 +42,10 @@ standard 的唯一增量是 `cordis_inspect_*`——它不改组合，只让改�
 
 ## 边界
 
-1. **只能挂已安装的包。** 新包要先 `dsh plugin --profile omd add <spec>` 进
+1. **只能挂已安装的包。** 新包要先 `dsh plugin --profile omd-full add <spec>` 进
    profile 依赖；HMR 不装依赖。
 2. **YAML 写坏会整层失败。** 改前复制一份基线，改后用
-   `dsh --profile omd --dump-config` 或直接看 HMR 日志确认。
+   `dsh --profile omd-full --dump-config` 或直接看 HMR 日志确认。
 3. **`link:` 包的源码改动不在本次结论里。** HMR 会重载模块，但 linked 包是否
    需要重建/重启，未验证。
 4. **agent preset 的行是只读的**（`plugin_manager` 明确拒绝）；改预设要改

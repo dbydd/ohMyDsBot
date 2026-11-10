@@ -58,12 +58,12 @@ mode/label 取子自身描述符（`foldSubagentDescriptor(events.slice(inherite
 1. **共享切片（不是本源独有）**：`plugins/host/omd-internal-paths/src/service.ts:23-26` 的 `InternalExec` 加 `agent?: Agent`；`omd-read` 从 `ctx.readSchemes` 迁到 `ctx.internalPaths` 时把 `{ signal: exec.signal, agent: exec.agent }` 传下去（`docs/omd-internal-paths.md:51-56` 步骤 2-3）。这是**一个**切片，谁先落谁拥有；本源只消费，不改 `omd-read`、不改 `omd-internal-paths`。（与 ProcUriPlan 已就此对齐。）
 2. 新包 `plugins/omd-agent-paths/`：`src/index.ts`（`name='omd-agent-paths'`，`inject=['internalPaths']`，`agents`/`subagents`/`sessionQuery` 只在读时 `ctx.get`）、`src/read.ts`（名册 + 定位 + 切片 + 折叠）、`src/render.ts`（两种视图）、`src/types.ts`。注册 `agent`，`shorthand: true`，`live: false`——界面半边今天只开一帧、不跟随（`plugins/host/omd-internal-paths/src/client/index.js:99-116`），写 `true` 就是谎。
 3. `Config`：`statusStaleAfterMs`（默认 0=不判超时）。无本机值。
-4. 挂载：`profiles/omd/cordis.patch.yml` 里给 `omd-internal-paths` 与本源各一行（profile 今天两者都没有）。
+4. 挂载：`profiles/omd-full/cordis.patch.yml` 里给 `omd-internal-paths` 与本源各一行（profile 今天两者都没有）。
 5. 不动的：`omd-agents-hub` 的 `omdAgents` 投影保留为面板名册，结果字段恒为 `null`（`fold.ts:57-59`），与本源零重合；`list_agents` 工具保留，本源补的是"通知滚走后还能取结果"这个工具缺口。
 
 验收：
 ```
-dsh --profile omd --dump-config >/dev/null     # 退出 0、stderr 空（用临时 profile）
+dsh --profile omd-full --dump-config >/dev/null     # 退出 0、stderr 空（用临时 profile）
 ```
 - 派一个子代理，`read agent://<id>` 的 `## Result` 与完成通知逐字一致；
 - 结算后 `read agent://<id>/status` 首行 `status: inactive`、`last-turn: completed`，且不出现 Result 段；

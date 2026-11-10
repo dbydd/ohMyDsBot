@@ -73,14 +73,14 @@
 1. 新建 `plugins/omd-local-docs/`：`src/store.ts`（无 Cordis：校验、清单、原子写、按路径链）、`src/index.ts`（`Config`、`register('local', …)`、`provide('localDocs')`）。`inject: ['internalPaths']`，不依赖 `agents`、`storageDomain`。
 2. `Config`：`root?`（默认 `dshHomePath('local','v1')`，本机取值只进 profile）、`maxDocumentBytes`（4 MiB）、`listingLimit`（200）、`maxDepth`（4）。全部机器无关默认值。
 3. `InternalSource`：`shorthand: true`；`live` 不声明（无订阅），`binary` 不声明（文本）。
-4. profile：`profiles/omd/cordis.patch.yml` 加 `omd-local-docs` 行，并 `dsh plugin --profile omd add ./plugins/omd-local-docs`；`omd-internal-paths` 自己那行与模型侧可达性由 `omd-read` 迁移那个统一切片补。
+4. profile：`profiles/omd-full/cordis.patch.yml` 加 `omd-local-docs` 行，并 `dsh plugin --profile omd-full add ./plugins/omd-local-docs`；`omd-internal-paths` 自己那行与模型侧可达性由 `omd-read` 迁移那个统一切片补。
 5. `omd-internal-paths`：`InternalSource` 加可选 `write(path, content, exec)`，服务加 `write(address, content, exec)` 只做路由；`local` 实现它，其余源保持只读。`omd-write` 只负责普通路径与内部地址的分流以及消息。
 
 验收（一次性脚本放 `/tmp`，不提交）：
 
 - `node /tmp/omd-local-check.ts` 调 `store.ts`：写入后逐字节读回；`task-log/Main.md` 嵌套创建；顺序覆盖时 `replaced` 为 true 且 `previousUpdatedAt` 存在；同名并发写后内容是其中一篇的完整版本；`../x`、`/etc/passwd`、`.tmp/x`、5 段路径分别被拒；`stat` 看到 0700/0600；清单含大小、mtime、排序与计数。
 - Cordis 冒烟：临时脚本挂 `omd-internal-paths` 与 `omd-local-docs`，`ctx.localDocs.write('a.md', 'hi')` 后 `ctx.internalPaths.read('local://a.md', {})` 返回 `hi`，根清单含 `a.md`；再注册一个只读假源，四种写失败各命中一次：`dsh-resource:///x`（语法）、`dsh-resource://nope/x`（源不存在）、`dsh-resource://ro/x`（源只读）、`local://../x`（源校验，带源名）。
-- `dsh --profile omd --dump-config` 退出码 0、stderr 为空；`dsh --profile omd` 启动无 “did not activate”。
+- `dsh --profile omd-full --dump-config` 退出码 0、stderr 为空；`dsh --profile omd-full` 启动无 “did not activate”。
 
 ## 九、风险与写面
 

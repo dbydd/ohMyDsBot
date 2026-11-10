@@ -69,7 +69,7 @@ dsh-resource://artifact/3f2a9c1d4e5f6071     # 规范形式，界面侧
 5. 共享前置（谁先落地谁做）：`omd-internal-paths` 挂 profile 行 + `omd-read` 迁到 `ctx.internalPaths`（`docs/omd-internal-paths.md §5` 第 2、3 步，不保留 `readSchemes`）。本切片在其后只加 `omd-artifact` 行并禁用 `spill-local`，`config.root: !!js dshHomePath('spill')`；更新 `docs/omd-internal-paths.md` 与 `plugins/README.md`。
 
 ```sh
-dsh --profile omd --dump-config            # exit 0，stderr 空，spill-local 不在 roster，omd-artifact 在
+dsh --profile omd-full --dump-config            # exit 0，stderr 空，spill-local 不在 roster，omd-artifact 在
 # 用 seq/yes 制造 >12500 tokens 的 bash 输出，确认 notice 里是 artifact://<16hex> 且没有 /tmp 路径
 read 'artifact://<id>:100-110'              # 行号 100..110，footer 报真实总行数
 read 'artifact://<id>:b0-65535'             # 前 64 KiB，字节 footer，无行号

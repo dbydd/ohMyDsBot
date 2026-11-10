@@ -209,7 +209,7 @@ export function patchRows(yaml) {
 export function profileProblems(repo = REPO) {
   const problems = []
   const byName = new Map(localPlugins(repo).map(plugin => [plugin.name, plugin]))
-  for (const profile of ['omd', 'omd-full']) {
+  for (const profile of ['omd-full']) {
     const file = join(repo, 'profiles', profile, 'cordis.patch.yml')
     if (!existsSync(file)) {
       problems.push(`profiles/${profile}/cordis.patch.yml is missing`)
@@ -257,7 +257,6 @@ export function secretProblems(repo = REPO) {
   const files = [
     join(repo, 'profiles', 'omd-full', 'cordis.patch.yml'),
     join(repo, 'profiles', 'omd-full', 'package.json'),
-    join(repo, 'profiles', 'omd', 'cordis.patch.yml'),
   ]
   for (const file of files) {
     if (!existsSync(file)) continue
@@ -503,6 +502,10 @@ export function stageDesktop(options) {
   // dsh-motion-ui 0.8.9 declares compatibility only through dsh 0.2.1-rc.5.
   // The pinned desktop host is dsh 0.2.2-rc.1, and an own bundle that the
   // loader skips aborts startup. Ship the package, do not require the bundle.
+  // dsh-motion-ui 0.8.9 peers stop at dsh 0.2.1-rc.5, so the loader skips it
+  // and an own bundle that was skipped aborts startup. The inspector profile
+  // 0.2.2-rc.1 has no engines.dsh and no @deepseek-ai/dsh-* peers, so
+  // evaluatePluginCompatibility does not skip it on the pinned host.
   const skippedBundles = new Set(['dsh-motion-ui'])
   const extra = plan.bundles.filter(name => !present.includes(name) && !skippedBundles.has(name))
   const nextBundles = [...present, ...extra].map(name => `'${name}'`).join(', ')
