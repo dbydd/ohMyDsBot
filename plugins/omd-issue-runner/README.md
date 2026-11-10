@@ -212,11 +212,14 @@ machine is up and the run may start, anything else fails the job with the state
 the manager named. The desktop in the receipt wins over the provider's own
 `vm.inspect` address. `dispose` sends `destroy` with the same `lease_id`, so a
 close removes the machine through the table that owns it, not by name alone.
-The node runtime routes the answer: a `compute` entry is settled against the ask
-waiting for it and never becomes a job.
+The node runtime routes the answer: a `compute-result` entry (JSON body, the
+shape `@onlyne/compute-gateway` posts) is settled against the ask waiting for
+it and never becomes a job. An older `compute` reply whose descriptor sits in
+`meta.data` still settles.
 
 The lease is kept alive: while a job holds one, a heartbeat sends `renew` with
-the `lease_id` and `ttl_ms` every half of the shorter window — `ttl / 2`, or half
+`lease_id` and a top-level `meta.ttl_ms` (the extension length; the gateway
+reads it there, not under `lease`) every half of the shorter window — `ttl / 2`, or half
 the receipt's `idle_timeout_ms` when that is smaller (the window is
 `computeTtlMs`, 6 h by default). It stops in `dispose` and on every path that
 reclaims the job, so a close never renews what it destroyed. One renewal is in
@@ -228,11 +231,11 @@ Two consequences are worth knowing:
 - **Expiry is the manager's.** A job whose lease lapsed is stopped under it; the
   machine keeps its disk and `acquire` resumes it. The heartbeat is what keeps a
   long job from reaching that point.
-- **No manager is not an error.** A host with no `omd-compute` (a standalone
-  test, a profile without it) answers `not_found`, the ask reports `absent`, and
-  the backend starts the machine directly with `vm.provision` and destroys it
-  with `vm.dispose`. `computeNodeId` names the peer, `computeTimeoutMs` bounds
-  the wait.
+- **No manager is an error for the vm backend.** The lease is the Onlyne
+  message. If `urn:onlyne:agent:compute` does not answer, the job fails and
+  this process does not call `orbctl`. A host without a driver should run the
+  `dsh-agent` backend, or point `computeNodeId` at a node that has one.
+  `computeTimeoutMs` bounds the wait.
 
 ## Closing a worker
 
@@ -491,10 +494,10 @@ are read per call: a missing allocator or registry fails the job with a reason
 - `bun test src/compute.test.ts` — the lease path. With a control plane that
   records calls: `provision` asks the manager and starts nothing itself,
   `dispose` destroys through the manager and releases the checkout, a manager
-  that answers `absent` leaves the machine to `vm.provision`/`vm.dispose`, and a
+  that answers `absent` fails the job and does not call `vm.provision`, and a
   failed acquire releases the checkout without starting a machine. Then the
   protocol itself: two real Onlyne nodes on one registry, where the manager's
-  `compute` answer settles the runner's ask and the acquire/destroy asks arrive
+  `compute-result` settles the runner's ask and the acquire/destroy asks arrive
   with the operation, name, workspace and purpose the manager reads. A v1
   receipt is read for `lease_id`, `connection.portal_urls.desktop`,
   `resolved_env` and `allocated`; `renew` names the lease; the heartbeat renews

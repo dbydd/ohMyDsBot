@@ -160,7 +160,7 @@ describe('vm-agent compute leases', () => {
     expect(worktrees.released.map(handle => handle.path)).toEqual([WORKSPACE])
   })
 
-  test('a manager that is absent leaves the machine to the provider', async () => {
+  test('a manager that is absent does not provision on this host', async () => {
     const worktrees = allocator()
     const boxes = machine()
     const leases = control('absent')
@@ -168,17 +168,10 @@ describe('vm-agent compute leases', () => {
       compute: leases.compute, vm: boxes.vm, allocator: worktrees.allocator,
     }))
 
-    const provisioned = await backend.provision(jobOf())
-    await backend.dispose(jobOf())
-
-    // A machine this backend started is not the manager's to destroy, so no
-    // destroy ask goes out for it.
+    await expect(backend.provision(jobOf())).rejects.toThrow('was not leased')
     expect(leases.calls).toEqual([`acquire:omd-sandbox-issue-job1:${WORKSPACE}:issue-job1`])
-    expect(boxes.calls).toEqual([
-      `provision:omd-sandbox-issue-job1:${WORKSPACE}`,
-      'dispose:omd-sandbox-issue-job1',
-    ])
-    expect(provisioned.desktopUrl).toBe('http://direct/vnc.html')
+    expect(boxes.calls).toEqual([])
+    expect(worktrees.released.map(handle => handle.path)).toEqual([WORKSPACE])
   })
 
   test('an acquire that fails releases the checkout and starts no machine', async () => {
@@ -286,8 +279,8 @@ describe('compute control client', () => {
         workspacePath: WORKSPACE,
         container: { image: 'debian:12' },
         lease: { ttl_ms: 1_800_000 },
-        work: { unit: 'ISSUE-7' },
         purpose: 'issue-job1',
+        work: { unit: 'ISSUE-7' },
       },
     }])
   })

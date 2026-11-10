@@ -7,6 +7,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./wire": "./src/wire.ts",
+    "./driver": "./src/driver.ts",
     "./package.json": "./package.json"
   },
   "dsh": {
@@ -17,6 +19,7 @@
   "peerDependencies": {
     "@deepseek-ai/cordis": "*",
     "@deepseek-ai/schemastery": "*",
+    "@onlyne/compute-core": "^3.2.0",
     "@onlyne/lib": "^3.2.0",
     "omd-internal-paths": "*",
     "omd-onlyne": "*",
@@ -25,6 +28,7 @@
   "devDependencies": {
     "@deepseek-ai/cordis": "*",
     "@deepseek-ai/schemastery": "*",
+    "@onlyne/compute-core": "^3.2.0",
     "@onlyne/lib": "^3.2.0",
     "omd-internal-paths": "*",
     "omd-onlyne": "*",

@@ -35,6 +35,7 @@
 import { mkdir, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { OnlyneError } from '@onlyne/lib'
+import { driverId, sandboxVmDriver } from './driver.ts'
 import { MACHINE_NAME, type MachineSnapshot, type SandboxVm } from 'omd-sandbox-vm/machine'
 import { readLedger, writeLedger, type StoredLease } from './ledger.ts'
 import type {
@@ -93,8 +94,12 @@ export function createCompute(config: ComputeConfig, ports: ManagerPorts): Compu
 
   function requireVm(): SandboxVm {
     const vm = ports.vm()
-    if (vm === undefined) {
-      throw new Error('omd-compute: the sandboxVm service is not mounted, so no machine can be started')
+    if (vm === undefined || driverId(vm) === undefined) {
+      throw new OnlyneError(
+        'unavailable',
+        'omd-compute: no machine driver is mounted on this node, so the lease was not started. '
+        + 'The compute message is the request; a node with a SandboxDriver (orbstack today, docker or QEMU later) has to answer it.',
+      )
     }
     return vm
   }
@@ -265,7 +270,7 @@ export function createCompute(config: ComputeConfig, ports: ManagerPorts): Compu
       if (existing !== undefined && existing.state !== 'released') {
         assertOwner(existing, owner)
         if (existing.state === 'stopped') {
-          await vm.start(existing.name)
+          await sandboxVmDriver(vm).start(existing.name)
           // A stopped lease resumes as a fresh claim: the lifetime ceiling counts
           // from the resume, not from an acquisition the caller already ended.
           return record({
@@ -283,7 +288,15 @@ export function createCompute(config: ComputeConfig, ports: ManagerPorts): Compu
       }
       const workspacePath = spec.workspacePath ?? workspaceFor(spec.name)
       await mkdir(workspacePath, { recursive: true })
-      await vm.provision({ name: spec.name, workspacePath })
+      // The bus already accepted this acquire. The driver is the only thing that
+      // touches a machine; the image stays the driver's own configured one.
+      await sandboxVmDriver(vm).provision(`lease-${spec.name}`, {
+        name: spec.name,
+        container: {
+          image: 'local',
+          mounts: [{ type: 'bind', host_path: workspacePath, container_path: '/workspace' }],
+        },
+      })
       return record({
         leaseId: `lease-${spec.name}`,
         name: spec.name,
@@ -327,14 +340,14 @@ export function createCompute(config: ComputeConfig, ports: ManagerPorts): Compu
       assertOwner(lease, callerOwner)
       const vm = requireVm()
       if (lease.autoDestroy) {
-        await vm.dispose(lease.name)
+        await sandboxVmDriver(vm).destroy(lease.name)
         await dropWorkspace(lease)
         leases.delete(lease.name)
         persist()
         return true
       }
       if (lease.state === 'running') {
-        await vm.stop(lease.name).catch((error: unknown) => {
+        await sandboxVmDriver(vm).stop(lease.name).catch((error: unknown) => {
           ports.log(`omd-compute: could not stop "${lease.name}" on release: ${
             error instanceof Error ? error.message : String(error)
           }`)
@@ -356,11 +369,11 @@ export function createCompute(config: ComputeConfig, ports: ManagerPorts): Compu
         if (vm === undefined || !ref.startsWith(config.namePrefix)) return false
         const machine = await vm.inspect(ref).catch(() => undefined)
         if (machine === undefined) return false
-        await vm.dispose(ref)
+        await sandboxVmDriver(vm).destroy(ref)
         return true
       }
       assertOwner(lease, callerOwner)
-      if (vm !== undefined) await vm.dispose(lease.name)
+      if (vm !== undefined) await sandboxVmDriver(vm).destroy(lease.name)
       await dropWorkspace(lease)
       leases.delete(lease.name)
       persist()
@@ -384,7 +397,7 @@ export function createCompute(config: ComputeConfig, ports: ManagerPorts): Compu
           const reason = expiryOf(lease, now)
           if (reason === undefined) continue
           try {
-            await vm.stop(lease.name)
+            await sandboxVmDriver(vm).stop(lease.name)
             // The retention clock starts at the stop, not at the deadline the
             // lease was granted: a machine stopped early is kept for the full
             // window from here.
@@ -401,7 +414,7 @@ export function createCompute(config: ComputeConfig, ports: ManagerPorts): Compu
         }
         if (now - lease.expiresAt >= config.retentionMs) {
           try {
-            await vm.dispose(lease.name)
+            await sandboxVmDriver(vm).destroy(lease.name)
             await dropWorkspace(lease)
             leases.delete(lease.name)
             persist()

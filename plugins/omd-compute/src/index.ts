@@ -48,6 +48,7 @@ import type { SandboxVm } from 'omd-sandbox-vm/machine'
 import type { BotNode } from 'omd-onlyne/node'
 import type { OnlyneService } from 'omd-onlyne/service'
 import { createCompute } from './manager.ts'
+import { COMPUTE_FAILED_KIND, COMPUTE_REQUEST_KIND, COMPUTE_RESULT_KIND, computeResultBody } from './wire.ts'
 import {
   COMPUTE_OPERATIONS,
   type ComputeConfig,
@@ -71,8 +72,8 @@ export const name = 'omd-compute'
 /** The plugin reads `onlyne` and `sandboxVm` from the process; neither is required to mount. */
 export const inject: string[] = []
 
-/** The delivery kind this node answers. */
-const COMPUTE_KIND = 'compute'
+/** The delivery kind a requester sends. Replies use {@link COMPUTE_RESULT_KIND}. */
+const COMPUTE_KIND = COMPUTE_REQUEST_KIND
 
 /**
  * The host's data root. `DS Bot.app` runs with `DSH_HOME=~/.ds-bot`, so a
@@ -372,25 +373,26 @@ function specOf(request: ComputeRequest): ComputeSpec {
  * admission by the receiving node's strict `meta` shape.
  * @param node - this manager's node.
  * @param entry - the request.
- * @param kind - `compute` for a result, `failed` for a refusal.
- * @param body - the text a human reads.
+ * @param kind - `compute-result` for a descriptor, `failed` for a refusal.
+ * @param body - the text a human reads. A result also carries that text as `summary` inside the JSON body.
  * @param data - the descriptor a caller reads.
  */
 export async function sendReply(
   node: BotNode,
   entry: Entry,
-  kind: 'compute' | 'failed',
+  kind: typeof COMPUTE_RESULT_KIND | typeof COMPUTE_FAILED_KIND,
   body: string,
   data: Record<string, Json>,
 ): Promise<void> {
   if (typeof node.ensurePaired === 'function') {
     await node.ensurePaired(entry.authenticated_author)
   }
+  const payload: Record<string, Json> = kind === COMPUTE_FAILED_KIND ? data : { summary: body, ...data }
   const message: MsgInput = {
     delivery_kind: kind,
-    msg: body,
+    msg: kind === COMPUTE_FAILED_KIND ? body : computeResultBody(payload),
     meta: {
-      ...data,
+      ...payload,
       to: entry.authenticated_author,
       thread: { owner: entry.thread_ref.owner, id: entry.thread_ref.id },
       in_reply_to: { sender: entry.message.sender, id: entry.message.id },
@@ -420,7 +422,7 @@ export async function handleBrokerInbox(
   try {
     const operation = request.operation
     if (operation === undefined) {
-      await sendReply(node, entry, 'failed', [
+      await sendReply(node, entry, COMPUTE_FAILED_KIND, [
         'compute: the message names no operation.',
         `It answers: ${COMPUTE_OPERATIONS.join(', ')} — name one in meta.operation `
           + '(or, for the legacy envelope, meta.data.operation).',
@@ -435,7 +437,7 @@ export async function handleBrokerInbox(
       if (ref !== undefined && shown.length === 0) {
         throw new OnlyneError('not_found', `compute: no lease named "${ref}".`)
       }
-      await sendReply(node, entry, 'compute', [
+      await sendReply(node, entry, COMPUTE_RESULT_KIND, [
         `compute status: ${String(shown.length)} lease(s).`,
         ...shown.map(lease => `- ${lease.name}: ${lease.state}, ends ${new Date(lease.expiresAt).toISOString()}`),
       ].join('\n'), {
@@ -453,14 +455,14 @@ export async function handleBrokerInbox(
         throw new OnlyneError('invalid_request', 'compute acquire: the machine name goes in meta.name.')
       }
       const lease = await compute.acquire(specOf(request), owner)
-      await sendReply(node, entry, 'compute', answerBody(lease, 'acquire'), {
+      await sendReply(node, entry, COMPUTE_RESULT_KIND, answerBody(lease, 'acquire'), {
         operation, ...describeLease(lease, config.retentionMs),
       })
       return
     }
     if (operation === 'renew') {
       const lease = await compute.renew(ref, request.ttlMs, owner)
-      await sendReply(node, entry, 'compute', answerBody(lease, 'renew'), {
+      await sendReply(node, entry, COMPUTE_RESULT_KIND, answerBody(lease, 'renew'), {
         operation, ...describeLease(lease, config.retentionMs),
       })
       return
@@ -468,12 +470,12 @@ export async function handleBrokerInbox(
     if (operation === 'release') {
       const before = compute.get(ref)
       if (before === undefined) {
-        await sendReply(node, entry, 'failed', `compute release: no lease named "${ref}".`, { operation, name: ref })
+        await sendReply(node, entry, COMPUTE_FAILED_KIND, `compute release: no lease named "${ref}".`, { operation, name: ref })
         return
       }
       await compute.release(ref, owner)
       const after = compute.get(ref)
-      await sendReply(node, entry, 'compute', after === undefined
+      await sendReply(node, entry, COMPUTE_RESULT_KIND, after === undefined
         ? `compute release: ${before.name} and its disk are gone.`
         : answerBody(after, 'release'), after === undefined
         ? { operation, name: before.name, state: 'released' }
@@ -481,13 +483,13 @@ export async function handleBrokerInbox(
       return
     }
     const destroyed = await compute.destroy(ref, owner)
-    await sendReply(node, entry, destroyed ? 'compute' : 'failed', destroyed
+    await sendReply(node, entry, destroyed ? COMPUTE_RESULT_KIND : COMPUTE_FAILED_KIND, destroyed
       ? `compute destroy: ${ref} and its disk are gone.`
       : `compute destroy: no machine named "${ref}" belongs to this manager.`, { operation, name: ref, destroyed })
   } catch (error) {
     const code = error instanceof OnlyneError ? error.error.code : 'internal'
     const message = error instanceof Error ? error.message : String(error)
-    await sendReply(node, entry, 'failed', `compute: ${message}`, {
+    await sendReply(node, entry, COMPUTE_FAILED_KIND, `compute: ${message}`, {
       ...(request.operation === undefined ? {} : { operation: request.operation }),
       error: { code, message },
     }).catch(() => undefined)
@@ -513,8 +515,18 @@ function createRuntime(
   config: ComputeConfig,
 ): Runtime {
   return {
-    supports: async () => true,
+    supports: async (_plan, message) => {
+      // Some admission checks call supports(plan) with no message. Refusing those
+      // drops the request before it exists. A present message is filtered: this
+      // node executes `compute` and must still admit its own `compute-result`.
+      if (message === undefined) return true
+      const kind = message.delivery_kind
+      return kind === COMPUTE_KIND || kind === COMPUTE_RESULT_KIND || kind === COMPUTE_FAILED_KIND
+    },
     async inject(entry: Entry, context: string | undefined) {
+      if (entry.message.delivery_kind !== COMPUTE_KIND) {
+        return { context: context ?? nodeId, consumed: true, outcome: 'consumed' }
+      }
       void handle(entry)
       return { context: context ?? nodeId, consumed: true, outcome: 'queued' }
     },
@@ -654,19 +666,21 @@ export async function sendExpiry(
     if (typeof node.ensurePaired === 'function') {
       await node.ensurePaired(lease.owner)
     }
+    const summary = [
+      `compute expired: ${lease.name} was stopped (${reason}).`,
+      `lease: ${lease.leaseId}`,
+      `retention ends: ${new Date(lease.expiresAt + retentionMs).toISOString()}`,
+    ].join('\n')
+    const payload: Record<string, Json> = {
+      summary,
+      operation: 'expired',
+      reason,
+      ...describeLease(lease, retentionMs),
+    }
     const message: MsgInput = {
-      delivery_kind: COMPUTE_KIND,
-      msg: [
-        `compute expired: ${lease.name} was stopped (${reason}).`,
-        `lease: ${lease.leaseId}`,
-        `retention ends: ${new Date(lease.expiresAt + retentionMs).toISOString()}`,
-      ].join('\n'),
-      meta: {
-        to: lease.owner,
-        operation: 'expired',
-        reason,
-        ...describeLease(lease, retentionMs),
-      },
+      delivery_kind: COMPUTE_RESULT_KIND,
+      msg: computeResultBody(payload),
+      meta: { to: lease.owner, ...payload },
     }
     await node.node.client.msg(message)
   } catch (error) {

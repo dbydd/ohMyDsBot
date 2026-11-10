@@ -11,13 +11,15 @@
  * data does not. The reply describes a lease; commands and the desktop stay
  * `omd-sandbox-vm`'s seam (`exec`, `SandboxBash`, `inspect`).
  *
- * A host with no `omd-compute` gets `absent`, never an error: the backend then
- * starts the machine itself, exactly as it did before the manager existed.
+ * A host with no providing node gets `absent`. That is not a cue to call
+ * `orbctl` here: the lease is the message, and only a node with a driver
+ * starts the machine.
  *
  * @module omd-issue-runner/compute
  */
 
-import type { Entry, Json, MsgInput } from '@onlyne/lib'
+import type { Entry, Json } from '@onlyne/lib'
+import { computeRequest, readComputeResult, type ComputeWireRequest } from 'omd-compute/wire'
 import type { BotNode } from 'omd-onlyne/node'
 import {
   workJson,
@@ -27,12 +29,6 @@ import {
   type ComputeDescriptor,
   type ComputeLease,
 } from './types.ts'
-
-/** The delivery kind every control message and every answer carries. */
-const COMPUTE_KIND = 'compute'
-
-/** The kind the manager refuses with, so a refusal settles the ask it answers. */
-const FAILED_KIND = 'failed'
 
 /** What an acquire says in its body; the manager reads the operation from `meta`. */
 const ACQUIRE_TEXT = 'acquire workspace machine'
@@ -56,6 +52,31 @@ const DESTROY_TIMEOUT_MS = 30_000
  * the ask does not hold a close open for minutes.
  */
 const RENEW_TIMEOUT_MS = 30_000
+
+/**
+ * The ask's meta, as the standard request spells it.
+ * @param meta - fields `acquire`, `renew` and `destroy` already gathered.
+ * @returns the wire request.
+ */
+function wireOf(meta: { readonly [key: string]: Json }): ComputeWireRequest {
+  const operation = meta.operation
+  if (operation !== 'acquire' && operation !== 'renew' && operation !== 'release' && operation !== 'destroy' && operation !== 'status') {
+    throw new Error(`omd-issue-runner: "${String(operation)}" is not a compute bus operation`)
+  }
+  const container = objectOf(meta.container)
+  const lease = objectOf(meta.lease)
+  return {
+    operation,
+    ...typeof meta.name === 'string' ? { name: meta.name } : {},
+    ...typeof meta.lease_id === 'string' ? { lease_id: meta.lease_id } : {},
+    ...typeof meta.ttl_ms === 'number' ? { ttl_ms: meta.ttl_ms } : {},
+    ...typeof meta.workspacePath === 'string' ? { workspacePath: meta.workspacePath } : {},
+    ...container === undefined ? {} : { container: container as ComputeWireRequest['container'] },
+    ...lease === undefined ? {} : { lease: lease as ComputeWireRequest['lease'] },
+    ...typeof meta.purpose === 'string' ? { purpose: meta.purpose } : {},
+    ...meta.work === undefined ? {} : { work: meta.work },
+  }
+}
 
 /** The manager's answer, reduced to what the caller acts on. */
 type Answer =
@@ -195,7 +216,7 @@ export function createComputeControl(options: ComputeClientOptions): ComputeCont
     reportedAbsent = true
     options.log(
       `omd-issue-runner: no compute manager answers at ${options.managerId}; `
-      + 'machines are started directly and their leases are not tracked',
+      + 'the lease stays on the Onlyne bus and this process does not start a machine itself',
     )
   }
 
@@ -235,11 +256,7 @@ export function createComputeControl(options: ComputeClientOptions): ComputeCont
       if (typeof node.ensurePaired === 'function') {
         await node.ensurePaired(options.managerId)
       }
-      outcome = await node.node.client.msg({
-        delivery_kind: COMPUTE_KIND,
-        msg: text,
-        meta: { to: options.managerId, ...meta },
-      } satisfies MsgInput)
+      outcome = await node.node.client.msg(computeRequest(options.managerId, wireOf(meta), text))
     } catch (error) {
       answer({ ok: false, reason: 'the ask was not sent' })
       if (typeof error === 'object' && error !== null && 'error' in error) {
@@ -329,26 +346,25 @@ export function createComputeControl(options: ComputeClientOptions): ComputeCont
     },
 
     settle(entry: Entry): boolean {
-      const kind = entry.message.delivery_kind
       if (entry.authenticated_author !== options.managerId) return false
-      if (kind !== COMPUTE_KIND && kind !== FAILED_KIND) return false
-      const data = entry.message.meta?.data ?? {}
-      const named = typeof data.name === 'string' && data.name !== '' ? data.name : undefined
+      const result = readComputeResult(entry)
+      if (result === undefined) return false
+      const named = result.ok && typeof result.data.name === 'string' && result.data.name !== '' ? result.data.name : undefined
       const replyTo = repliedToOf(entry)
       const waiting = named === undefined
         ? [...pending.values()].find(row => replyTo !== undefined && row.messageId === replyTo)
         : pending.get(named) ?? [...pending.values()].find(row => replyTo !== undefined && row.messageId === replyTo)
       if (waiting !== undefined) {
-        // A manager refuses an operation with `failed`; the kind decides the
-        // outcome, so the operator reads a refusal instead of waiting it out.
-        waiting.answer(kind === COMPUTE_KIND ? { ok: true, data } : { ok: false, reason: entry.message.msg })
+        // A standard reply is `compute-result` with a JSON body. `failed`, and a
+        // body that carries `error`, settle the same ask as a refusal.
+        waiting.answer(result.ok ? { ok: true, data: result.data } : { ok: false, reason: result.reason })
         return true
       }
       // Nothing in this process is waiting: the ask timed out, or the process
       // restarted under it. The entry still belongs to the manager, so it is
       // consumed here — answering it would open a thread about a thread.
       options.log(
-        `omd-issue-runner: an unsolicited ${kind} answer from ${entry.authenticated_author}: ${entry.message.msg}`,
+        `omd-issue-runner: an unsolicited ${entry.message.delivery_kind} answer from ${entry.authenticated_author}: ${entry.message.msg}`,
       )
       return true
     },
