@@ -2,7 +2,7 @@
 
 This directory holds our out-of-tree extensions. Current development targets DS-Bot v0.2.7 on dsh 0.2.1-rc.5. The read-only application checkout lives at `../ds-bot/`; the dsh source under `../refs/deepseek-harness/` is an older rc.2 reference. Changes belong in local plugins and profile overlays.
 
-Every package below publishes to npm as `@dbydd/<name>` (the table uses the unscoped shorthand). Host runtime packages (`@deepseek-ai/*`) stay in `peerDependencies` + `devDependencies`; the dsh host provides them.
+Every package in the table below publishes to npm as `@dbydd/<name>` (the table uses the unscoped shorthand). The Onlyne packages under [The Onlyne suite](#the-onlyne-suite) are private and keep their unscoped names. Host runtime packages (`@deepseek-ai/*`) stay in `peerDependencies` + `devDependencies`; the dsh host provides them.
 
 The existing `omd` profile retains its custom composition. The new DS-Bot composition starts with the following bundle order:
 
@@ -44,18 +44,36 @@ flowchart LR
 | `omd-table-chart` | The first table of a settled answer becomes a chart record (`plugin:omd/table-chart`) and an inline SVG in the chat row; `omd-chart-plan` does the reading and the kind cascade. |
 | `omd-hindsight` | Sealed. Its package is kept for reference and is loaded by no profile. |
 
-## The Onlyne suite moved out
+## The Onlyne suite
 
-`omd-onlyne`, `omd-compute`, `omd-issue-runner` and `archived/onlyne-bridge`
-now live in `<onlyne>/external-integrations/dsh-onlyne/`, beside the
-`@onlyne/lib` they bind, because they have to move with the protocol. That
-directory is a git repository of its own and carries the suite's README.
+`omd-onlyne`, `omd-compute`, and `omd-issue-runner` live in this directory.
+They are `private: true`, keep the unscoped package names, and are not published
+to npm. Each is a `link:` dependency of a dsh profile. Mount one by adding the
+row in its `cordis.patch.yml`, or with `dsh plugin --profile <profile> add
+./plugins/<name>` — each declares `dsh.bundle`. They are not part of
+`profiles/omd`'s npm composition. `archived/onlyne-bridge` is not in this
+repository.
 
-Nothing here imports them. They import two packages that stayed: `omd-internal-paths`
-and `omd-sandbox-vm`, which `link-host-runtime.mjs` links into the moved tree's
-`node_modules` on every run, together with the host runtime and `@onlyne/lib`.
-They name each other and those two by package specifier, so the same files
-resolve from the moved tree and from `app.asar/node_modules`.
+| package | what it is |
+|---|---|
+| `omd-onlyne/` | Onlyne v3 for one DSH process: stable node identity shared across sessions over one process HTTP listener, durable SQLite/file storage, on-demand single-flight pairing, configured remote seeds, the `msg` tool, `onlyne://` (`directory`, `neighbors`, `threads`, `inbox`, `runner/workers`), and `ctx.onlyne`. |
+| `omd-compute/` | OECP v1 compute leases over OrbStack machines — `acquire`, `renew`, `release`, `destroy`, `status` — with single-owner enforcement (`forbidden`), hard `maxTtlMs` (`capacity_exceeded`), full connection/allocation receipts, and expiry notices. |
+| `omd-issue-runner/` | Issue-driven coding: an Onlyne participant with first-class `meta.work` idempotency, decoupled worker URIs (`onlyne://runner/issue/<workerId>`) and `onlyne://runner/workers` catalog, cross-thread `review` (`approve`/`reject`), and automatic `ttl/2` lease heartbeats. |
+
+They import each other, `omd-internal-paths`, and `omd-sandbox-vm` by package
+specifier. `node plugins/link-host-runtime.mjs` links those names into
+`plugins/node_modules`, together with the host runtime, and installs the
+published `@onlyne/lib@^3.2.0` from `plugins/npm-packages` into the same
+directory. Set `ONLYNE_ROOT` to a local Onlyne checkout to use
+`<ONLYNE_ROOT>/packages/lib` instead of the npm package.
+
+```sh
+node plugins/link-host-runtime.mjs
+dsh plugin --profile <profile> add ./plugins/omd-onlyne
+dsh plugin --profile <profile> add ./plugins/omd-compute
+dsh plugin --profile <profile> add ./plugins/omd-issue-runner
+bun test omd-onlyne omd-compute omd-issue-runner   # from plugins/
+```
 
 ## Which half goes where
 
@@ -85,7 +103,7 @@ node plugins/link-host-runtime.mjs                 # host packages from the inte
 node plugins/link-host-runtime.mjs --from-profile omd
 ```
 
-The second list matters for `omd-lsp-nav` and `omd-ast-edit`: they import `dsh-tool-lsp` / `dsh-tool-ast-grep` internals, which a *profile* installs rather than the shared layer. The in-tree list exists for the same reason: `omd-todo-driver` imports `omd-todo` and `omd-judge-context` by package name, and neither is a profile dependency.
+The second list matters for `omd-lsp-nav` and `omd-ast-edit`: they import `dsh-tool-lsp` / `dsh-tool-ast-grep` internals, which a *profile* installs rather than the shared layer. The in-tree list exists for the same reason: `omd-todo-driver` imports `omd-todo` and `omd-judge-context` by package name, and neither is a profile dependency. The Onlyne packages are on that list too: `omd-compute` and `omd-issue-runner` import `omd-onlyne`, `omd-internal-paths`, and `omd-sandbox-vm` by package specifier. `@onlyne/lib` is not linked from a checkout; the same script installs `^3.2.0` from npm.
 
 `pnpm` 12 refuses an install with unapproved build scripts. `dsh-browser-tool` depends on `sharp`, so each profile that installs it needs the approval recorded once:
 

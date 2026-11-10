@@ -1,0 +1,5 @@
+# omd-compute — compute leases over OrbStack machines, supervised by an Onlyne
+# node, mounted after omd-onlyne and omd-sandbox-vm.
+- insert:
+    - id: omd-compute
+      name: omd-compute

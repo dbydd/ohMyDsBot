@@ -297,11 +297,11 @@ deleted afterwards: a fresh `provision` on each, the tool and browser probes
 listed in the measured section, a frame captured with the browser running, a
 full re-run of the script after every desktop daemon was killed, and a
 re-provision of a machine that already had a menu file of its own. The consumer
-suites that build on this package now live in
-`<onlyne>/external-integrations/dsh-onlyne/` and import this one as
+suites that build on this package live in `plugins/omd-onlyne`,
+`plugins/omd-compute`, and `plugins/omd-issue-runner`, and import this one as
 `omd-sandbox-vm`, `omd-sandbox-vm/machine`, `omd-sandbox-vm/bash-tool` and
-`omd-sandbox-vm/types`. Run from that directory, after `node
-plugins/link-host-runtime.mjs` in this checkout has linked this package in:
+`omd-sandbox-vm/types`. Run from `plugins/` after
+`node plugins/link-host-runtime.mjs` has linked this package in:
 
 ```sh
 bun test omd-onlyne omd-compute omd-issue-runner

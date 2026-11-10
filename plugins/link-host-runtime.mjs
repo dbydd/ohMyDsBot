@@ -4,12 +4,13 @@
 // packages that a sibling imports by name are linked the same way, for the
 // same reason: a profile link resolves them from the importer's real path.
 //
-// The Onlyne integration suite is a tree of its own, outside this repository
-// (`<onlyne>/external-integrations/dsh-onlyne`), so its `node_modules` gets the
-// same treatment: host runtime, the in-tree siblings it imports, `@onlyne/lib`
-// from the Onlyne checkout, and its own packages. That is what lets the moved
-// packages name each other by package specifier and stay location-independent
-// when they are copied into `app.asar/node_modules`.
+// The Onlyne packages (`omd-onlyne`, `omd-compute`, `omd-issue-runner`) live
+// in this tree under `plugins/`. They import each other, and the siblings
+// `omd-internal-paths` and `omd-sandbox-vm`, by package specifier, so those
+// names are linked here too. `@onlyne/lib` is the published npm package
+// `^3.2.0`: this script installs `plugins/npm-packages` and links that copy
+// into `plugins/node_modules`. `ONLYNE_ROOT`, when set, uses
+// `<ONLYNE_ROOT>/packages/lib` instead.
 //
 // Why this exists
 // ---------------
@@ -30,7 +31,8 @@
 // Usage: `node plugins/link-host-runtime.mjs [--dsh-home <dir>]`
 // Idempotent: an existing correct link is left alone.
 
-import { existsSync, lstatSync, mkdirSync, readlinkSync, rmSync, symlinkSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
+import { existsSync, lstatSync, mkdirSync, readFileSync, readlinkSync, rmSync, symlinkSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -81,14 +83,14 @@ const SIBLING_PACKAGES = [
 const pluginsRoot = dirname(fileURLToPath(import.meta.url))
 const repoRoot = dirname(pluginsRoot)
 
-/** The Onlyne checkout, whose `packages/lib` is `@onlyne/lib`. */
-const onlyneRoot = process.env.ONLYNE_ROOT ?? join(homedir(), 'Documents', 'progs', 'onlyne')
+/** Where `npm ci` installs `@onlyne/lib` so it does not own `plugins/node_modules`. */
+const npmPackagesRoot = join(pluginsRoot, 'npm-packages')
 
-/** The DSH integration suite, moved out of this repository. */
-const dshOnlyneRoot = join(onlyneRoot, 'external-integrations', 'dsh-onlyne')
-
-/** The packages that live inside `dsh-onlyne` and import each other by name. */
+/** In-tree Onlyne packages that import each other by package specifier. */
 const ONLYNE_PACKAGES = ['omd-onlyne', 'omd-compute', 'omd-issue-runner']
+
+/** npm range declared in `plugins/npm-packages/package.json`. */
+const ONLYNE_LIB_RANGE = '^3.2.0'
 
 /**
  * `$DSH_HOME/profiles/node_modules`, the interception layer every profile
@@ -115,14 +117,81 @@ function runtimeLinks() {
  */
 function link(from, to) {
   if (!existsSync(to)) return 'missing-source'
-  const present = lstatSync(from, { throwIfNoEntry: false }) !== undefined
-  if (present) {
-    if (resolve(dirname(from), readlinkSync(from)) === resolve(to)) return 'already'
+  const present = lstatSync(from, { throwIfNoEntry: false })
+  if (present !== undefined) {
+    if (present.isSymbolicLink() && resolve(dirname(from), readlinkSync(from)) === resolve(to)) return 'already'
     rmSync(from, { recursive: true, force: true })
   }
   mkdirSync(dirname(from), { recursive: true })
   symlinkSync(to, from, 'dir')
-  return present ? 'repaired' : 'linked'
+  return present !== undefined ? 'repaired' : 'linked'
+}
+
+/**
+ * `^3.2.0`: 3.x from 3.2.0 up, and not 4.0.0.
+ * @param {string} version
+ * @returns {boolean}
+ */
+function satisfiesOnlyneLib(version) {
+  const match = /^(\d+)\.(\d+)\.(\d+)/.exec(version)
+  if (match === null) return false
+  const major = Number(match[1])
+  const minor = Number(match[2])
+  return major === 3 && minor >= 2
+}
+
+/**
+ * @param {string} dir package directory
+ * @returns {string}
+ */
+function packageVersion(dir) {
+  try {
+    const parsed = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'))
+    return typeof parsed.version === 'string' ? parsed.version : ''
+  } catch {
+    return ''
+  }
+}
+
+/**
+ * Put `@onlyne/lib` on the plugins' resolution path.
+ * An explicit `ONLYNE_ROOT` wins. Otherwise the published package is installed.
+ * @returns {string} one line for the summary
+ */
+function ensureOnlyneLib() {
+  const dest = join(pluginsRoot, 'node_modules', '@onlyne', 'lib')
+  const override = process.env.ONLYNE_ROOT
+  if (override !== undefined && override.length > 0) {
+    const source = join(override, 'packages', 'lib')
+    const state = link(dest, source)
+    if (state === 'missing-source') {
+      console.error(`link-host-runtime: ONLYNE_ROOT=${override} has no packages/lib`)
+      process.exit(1)
+    }
+    console.log(`@onlyne/lib: ${state} -> ${source} (ONLYNE_ROOT)`)
+    return `@onlyne/lib from ONLYNE_ROOT (${source})`
+  }
+
+  const installed = join(npmPackagesRoot, 'node_modules', '@onlyne', 'lib')
+  if (!satisfiesOnlyneLib(packageVersion(installed))) {
+    const npm = spawnSync('npm', [
+      'ci',
+      '--ignore-scripts',
+      '--no-fund',
+      '--no-audit',
+      '--prefix', npmPackagesRoot,
+    ], { stdio: 'inherit' })
+    if (npm.status !== 0 || !satisfiesOnlyneLib(packageVersion(installed))) {
+      console.error(`link-host-runtime: failed to install @onlyne/lib@${ONLYNE_LIB_RANGE} from npm`)
+      process.exit(1)
+    }
+    console.log(`@onlyne/lib: installed ${packageVersion(installed)} from npm`)
+  } else {
+    console.log(`@onlyne/lib: npm ${packageVersion(installed)} already at ${installed}`)
+  }
+  const state = link(dest, installed)
+  console.log(`@onlyne/lib: ${state} -> ${installed}`)
+  return `@onlyne/lib ${packageVersion(installed)} from npm`
 }
 
 const flagIndex = process.argv.indexOf('--dsh-home')
@@ -145,7 +214,7 @@ const trees = [
 			...runtimeLinks(),
 			...PROFILE_PACKAGES.map(name => [name, join(profileModules, name)]),
 			...SIBLING_PACKAGES.map(name => [name, join(pluginsRoot, name)]),
-			['@onlyne/lib', join(onlyneRoot, 'packages', 'lib')],
+			...ONLYNE_PACKAGES.map(name => [name, join(pluginsRoot, name)]),
 		],
 	},
 	...(existsSync(join(repoRoot, 'external-plugins'))
@@ -153,17 +222,6 @@ const trees = [
 		: []),
 	...(existsSync(join(repoRoot, 'ds-bot'))
 		? [{ modules: join(repoRoot, 'node_modules'), packages: runtimeLinks() }]
-		: []),
-	...(existsSync(dshOnlyneRoot)
-		? [{
-			modules: join(dshOnlyneRoot, 'node_modules'),
-			packages: [
-				...runtimeLinks(),
-				...SIBLING_PACKAGES.map(name => [name, join(pluginsRoot, name)]),
-				['@onlyne/lib', join(onlyneRoot, 'packages', 'lib')],
-				...ONLYNE_PACKAGES.map(name => [name, join(dshOnlyneRoot, name)]),
-			],
-		}]
 		: []),
 ]
 
@@ -173,31 +231,26 @@ if (!existsSync(layer)) {
   process.exit(1)
 }
 
-/** Specifiers that are absent because the checkout is not here, not because the link broke. */
-const optionalOnlyne = new Set(['@onlyne/lib', ...ONLYNE_PACKAGES])
-
 let failed = false
 for (const tree of trees) {
   for (const [specifier, to] of tree.packages) {
     const from = join(tree.modules, specifier)
     const state = link(from, to)
     if (state === 'missing-source') {
-      if (optionalOnlyne.has(specifier)) {
-        console.log(`${specifier}: skipped, no source at ${to}`)
-      } else {
-        failed = true
-        console.error(`link-host-runtime: ${dirname(to)} holds no ${specifier}`)
-      }
+      failed = true
+      console.error(`link-host-runtime: ${dirname(to)} holds no ${specifier}`)
     } else {
       console.log(`${specifier}: ${state} -> ${to}`)
     }
   }
 }
 
+const onlyneSummary = ensureOnlyneLib()
+
 if (failed) process.exit(1)
 console.log(
 	`linked ${RUNTIME_PACKAGES.length} host package(s) from ${layer} into ${trees.length} tree(s), `
 	+ `${PROFILE_PACKAGES.length} profile package(s) from ${profileModules}, `
-	+ `${SIBLING_PACKAGES.length} in-tree sibling package(s), `
-	+ `and ${ONLYNE_PACKAGES.length} Onlyne package(s) from ${dshOnlyneRoot}`,
+	+ `${SIBLING_PACKAGES.length + ONLYNE_PACKAGES.length} in-tree sibling package(s), `
+	+ `and ${onlyneSummary}`,
 )

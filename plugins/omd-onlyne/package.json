@@ -1,0 +1,38 @@
+{
+  "name": "omd-onlyne",
+  "version": "0.1.0",
+  "description": "Onlyne v3 inside dsh: one stable node identity per process, one shared listener, a durable store, the msg tool and onlyne:// reads",
+  "private": true,
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client/index.js",
+    "./node": "./src/node.ts",
+    "./service": "./src/service.ts",
+    "./registry": "./src/registry.ts",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "platform": "web"
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/dsh-agent": "*",
+    "@deepseek-ai/dsh-llm": "*",
+    "@deepseek-ai/dsh-tools": "*",
+    "@deepseek-ai/schemastery": "*",
+    "@onlyne/lib": "^3.2.0",
+    "omd-internal-paths": "*"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "@onlyne/lib": "^3.2.0",
+    "omd-internal-paths": "*"
+  }
+}

@@ -35,7 +35,7 @@ dsh --profile omd --no-open                              # Web UI 默认 http://
 
 | 路径 | 内容 |
 |---|---|
-| `plugins/` | 33 个 npm 插件（`@dbydd/omd-*`），目录见 [plugins/README.md](plugins/README.md) |
+| `plugins/` | 33 个 npm 插件（`@dbydd/omd-*`），另有 3 个不发布的 Onlyne 插件（`omd-onlyne`、`omd-compute`、`omd-issue-runner`）。目录见 [plugins/README.md](plugins/README.md) |
 | `profiles/omd/` | 现役组合：`package.json`（依赖清单）+ `cordis.patch.yml`（挂载与配置） |
 | `ds-bot/` | 只读 submodule，上游应用（DS-Bot v0.2.7 / dsh 0.2.1-rc.5） |
 | `external-plugins/dsh-motion-ui/` | 只读 submodule，第三方交互组件（v0.8.9） |

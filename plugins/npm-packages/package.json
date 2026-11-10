@@ -1,0 +1,9 @@
+{
+  "name": "omd-plugin-npm-packages",
+  "private": true,
+  "description": "Published packages that plugins under plugins/ import by bare specifier. link-host-runtime.mjs installs this directory and links @onlyne/lib into plugins/node_modules. Set ONLYNE_ROOT to use a local Onlyne checkout instead.",
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "@onlyne/lib": "^3.2.0"
+  }
+}
