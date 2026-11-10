@@ -50,7 +50,7 @@ interface InternalPathsService {
 
 ## 5. 迁移与首个消费者
 
-1. 新建 `plugins/omd-internal-paths/`（宿主半边 + client 半边），实现第 3、4 节。
+1. 新建 `plugins/host/omd-internal-paths/`（宿主半边 + client 半边），实现第 3、4 节。
 2. `omd-read` 删掉自己的 scheme 表，改为 `inject: ['internalPaths']`；读地址时先问 `resolve`，命中就 `read`，未命中按文件路径处理。`skill` 源的注册留在 `omd-read`（它依赖 `ctx.skills`），只是改为注册进 `ctx.internalPaths`，并声明 `shorthand: true`。
 3. 兼容：`ctx.readSchemes` 不再提供；仓库内没有别的消费者，直接删除，不留别名。
 4. `omd-memory` 之后把 `memory` 源注册进来即可获得两侧能力，不需要再碰 `omd-read` 或客户端。
@@ -60,7 +60,7 @@ interface InternalPathsService {
 - 模型侧：`read` 一个 `skill://<name>` 与一个 `dsh-resource://skill/<name>` 都成功且内容一致；未注册源报错信息里带已注册列表；一个名为 `skill:12` 的真实文件仍按文件路径读取（简写不误判）。
 - 宿主侧：注册/注销的 disposer 幂等；重复注册同名源抛错；`sources()` 排序稳定。
 - 界面侧：`useResource('dsh-resource://skill/<name>')` 能读到文本；源不存在时返回 `none` 而不是抛错；client 半边是纯 `.js`。
-- `dsh --profile omd --dump-config` 退出码 0、stderr 为空；`dsh --profile omd` 启动无 "did not activate"。验完 profile 逐字节恢复（用临时 profile，不改 `~/.dsh/profiles/omd`）。
+- `dsh --profile omd-full --dump-config` 退出码 0、stderr 为空；`dsh --profile omd-full` 启动无 "did not activate"。验完 profile 逐字节恢复（用临时 profile，不改 `~/.dsh/profiles/omd-full`）。
 
 ## 7. 边界
 

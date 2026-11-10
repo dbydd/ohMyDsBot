@@ -17,10 +17,10 @@
 
 ## 1 证据
 
-- 闭表与合成：`plugins/omd-project-config/src/schema.ts:33`（`configLayerSchema`，`.strict()`）、`:58`（`FIELD_PATHS`）、`:70`（`FieldKind`，无 select/enum）、`:184`（`resolveFields`，纯函数无 I/O）、`:210`（`mergeLayer`）、`:253`（`kindOf`）；项目根与层：`src/store.ts:40`（`rev-parse --show-toplevel`，失败退 cwd）、`:96`（按 mtime 缓存层）、`:22`（`run = promisify(execFile)`，读 origin 复用）。
-- 服务面：`plugins/omd-project-config/src/service.ts:97`（`REMOTE_METHODS`）、`:122`（`resolve(cwd)`）、`:153`（`write` 先过 zod）、`:212`（`composite`）。
-- 面板由 schema 驱动：`plugins/omd-project-config/src/client/index.js:258`（`buildPatch` 按 kind）、`:285`（`FieldControl`）、`:429`（按 `path.split('.')[0]` 分组，标题 `group.<name>`）、`:162`（手写 descriptor）、`:220`（入口拿 Workspace 路径，与 `docs/omd-project-config.md:59` 一致）。
-- 消费方缺 cwd：`plugins/omd-internal-paths/src/service.ts:25-28`，`InternalExec` 只有 `signal`；而 `omd-read` 已经算出了它（`plugins/omd-read/src/index.ts:221`）。统一契约（与 proc 侧对齐，一次加完）：`agent?: Agent`（proc 按 agent 围栏）+ `cwd?: string`（绑定/库发现只要目录，免得每个源都自己 `ensure`）；两个都可缺，缺了就按"相对地址不可解析"报。
+- 闭表与合成：`plugins/workbench/omd-project-config/src/schema.ts:33`（`configLayerSchema`，`.strict()`）、`:58`（`FIELD_PATHS`）、`:70`（`FieldKind`，无 select/enum）、`:184`（`resolveFields`，纯函数无 I/O）、`:210`（`mergeLayer`）、`:253`（`kindOf`）；项目根与层：`src/store.ts:40`（`rev-parse --show-toplevel`，失败退 cwd）、`:96`（按 mtime 缓存层）、`:22`（`run = promisify(execFile)`，读 origin 复用）。
+- 服务面：`plugins/workbench/omd-project-config/src/service.ts:97`（`REMOTE_METHODS`）、`:122`（`resolve(cwd)`）、`:153`（`write` 先过 zod）、`:212`（`composite`）。
+- 面板由 schema 驱动：`plugins/workbench/omd-project-config/src/client/index.js:258`（`buildPatch` 按 kind）、`:285`（`FieldControl`）、`:429`（按 `path.split('.')[0]` 分组，标题 `group.<name>`）、`:162`（手写 descriptor）、`:220`（入口拿 Workspace 路径，与 `docs/omd-project-config.md:59` 一致）。
+- 消费方缺 cwd：`plugins/host/omd-internal-paths/src/service.ts:25-28`，`InternalExec` 只有 `signal`；而 `omd-read` 已经算出了它（`plugins/host/omd-read/src/index.ts:221`）。统一契约（与 proc 侧对齐，一次加完）：`agent?: Agent`（proc 按 agent 围栏）+ `cwd?: string`（绑定/库发现只要目录，免得每个源都自己 `ensure`）；两个都可缺，缺了就按"相对地址不可解析"报。
 
 ## 2 字段形状
 
@@ -84,20 +84,20 @@ github 源的地址语法由它自己定，这里只约定取绑定：`await ctx
 
 ## 8 实施切片
 
-1. `plugins/omd-project-config/src/repo.ts`（新）：`parseRepoRef`、`parseRemoteUrl`、`normalizeSlug`、`redactUrl`。
-2. `plugins/omd-project-config/src/schema.ts`：`repo` 段 + refine、`FIELD_PATHS` 首位、`kindOf`、`defaultLayer`、`mergeLayer`。
-3. `plugins/omd-project-config/src/store.ts`：`originUrl(root, fresh?)`，按 root 缓存，`invalidateCaches()` 清。
-4. `plugins/omd-project-config/src/service.ts`：`repoBinding` + `REMOTE_METHODS` 加一项。
-5. `plugins/omd-project-config/src/client/index.js` 与 `docs/omd-project-config.md`：locale（`group.repo`、`field.repo.slug*`）、descriptor、状态行与两个按钮、placeholder 泛化；文档补字段表一行、`repoBinding` 三态、优先级、错误文案。
+1. `plugins/workbench/omd-project-config/src/repo.ts`（新）：`parseRepoRef`、`parseRemoteUrl`、`normalizeSlug`、`redactUrl`。
+2. `plugins/workbench/omd-project-config/src/schema.ts`：`repo` 段 + refine、`FIELD_PATHS` 首位、`kindOf`、`defaultLayer`、`mergeLayer`。
+3. `plugins/workbench/omd-project-config/src/store.ts`：`originUrl(root, fresh?)`，按 root 缓存，`invalidateCaches()` 清。
+4. `plugins/workbench/omd-project-config/src/service.ts`：`repoBinding` + `REMOTE_METHODS` 加一项。
+5. `plugins/workbench/omd-project-config/src/client/index.js` 与 `docs/omd-project-config.md`：locale（`group.repo`、`field.repo.slug*`）、descriptor、状态行与两个按钮、placeholder 泛化；文档补字段表一行、`repoBinding` 三态、优先级、错误文案。
 6. 跨包（不属本切片，由 `omd-read` 迁移那一片一次做完）：`InternalExec` 同时加 `agent?: Agent` 与 `cwd?: string`，`omd-read` 把已算出的两者传进 `internalPaths.read`；此前相对地址在有会话时不可用。
 
 验收：
 
 ```sh
 cd refs/deepseek-harness && node --import tsx/esm --input-type=module -e '
-const m = await import("<repo root>/plugins/omd-project-config/src/repo.ts")
+const m = await import("<repo root>/plugins/workbench/omd-project-config/src/repo.ts")
 for (const s of ["https://github.com/deepseek-ai/deepseek-harness.git","https://github.com/Scorp1o117/dsh-motion-ui.git","git@github.com:o/n.git","ssh://git@github.com:22/o/n.git","https://user:token@github.com/o/n","git@github-work:team/infra.git","/tmp/mirror.git","https://ghe.corp.example/team/infra.git"]) console.log(s, "->", m.parseRepoRef(s))'
-dsh --profile omd --dump-config   # 退出码 0、stderr 空（不改 profile）
+dsh --profile omd-full --dump-config   # 退出码 0、stderr 空（不改 profile）
 ```
 
 界面：本仓根打开面板 → `repo` 组显示"未绑定 · 没有 origin"；`refs/deepseek-harness` 的 cwd → 显示 origin 推导值 + `[使用]`；点它并保存 → 来源变"来自个人覆盖"；填 `ghe.corp.example/x/y` 保存成功；填 `github-work:x/y` 报 `expected "[host/]owner/name"`；手写坏 slug 到 `.omd/config.json` → 面板错误带文件路径。

@@ -35,7 +35,7 @@
 
 - `dsh-resource://file/session/<sessionId>/<path>` — `refs/deepseek-harness/packages/util/workspace-path/src/file-address.ts:14-16`；documentpreview 以 `fallback` 档认领（`src/client/definition.ts:45-54`）。
 - `dsh-resource://changes-review/session/<sessionId>/<seq>/<turn>` — `refs/deepseek-harness/packages/client/ui-deliverables/README.md:67`。
-- 面板按钮不需要地址：`sidebar.footer.action`，omd 已在用（`plugins/omd-project-config/src/client/index.js:520`）。
+- 面板按钮不需要地址：`sidebar.footer.action`，omd 已在用（`plugins/workbench/omd-project-config/src/client/index.js:520`）。
 
 诊断视图不必新造地址：它作为同一批后缀的另一个 document renderer 出现，用户从查看器下拉切换。
 
@@ -46,19 +46,19 @@
 - `ctx.get('documentPreviews').register({ id, extensions, priority, title, loading: 'text-pages', wrap: true })`；registry 由 `src/client/index.ts:90-91` 用 `ctx.reflect.provide` 暴露。
 - `ctx.slots.inject('sidebar.right.tab.document', () => ctx.slots.register({ name: 'sidebar.right.tab.document', key: id }, Body))`，写法照 `src/client/index.ts:103-117`。
 - 可选按钮位：`sidebar.right.tab.document.actions`（`contract.ts` 同处声明，`index.ts:108`）。
-- Remote：host 新 namespace，omd 已有现成写法 `plugins/omd-project-config/src/remote.ts:29-51` + 客户端 `$mount`/`remote.call`（`plugins/omd-project-config/src/client/index.js:144-198`）。
+- Remote：host 新 namespace，omd 已有现成写法 `plugins/workbench/omd-project-config/src/remote.ts:29-51` + 客户端 `$mount`/`remote.call`（`plugins/workbench/omd-project-config/src/client/index.js:144-198`）。
 
 数据侧今天在哪：
 
 - 核心 `ctx.lsp` 只有 4 个只读导航操作，明确 “no protocol escape hatch”（`refs/deepseek-harness/packages/lsp/lsp/src/types.ts:110-111`）。安装版 `dsh` 0.2.1-rc.2 的 `node_modules/@deepseek-ai` 里没有 `dsh-lsp*`；只有 refs 检出（tag `dsh-v0.2.1-rc.2`）有 `packages/lsp/`。
 - 实际可用的是社区 `dsh-tool-lsp`：`lib/runner.js:335-357` 持久 didOpen/didChange，`380-406` `settlePublished`/didClose，`424-431` 通用 `request`，`269-277` 抓 `publishDiagnostics`；`lib/translate.js:262` 的 `normalizeDiagnostics(payload, decode)` 直接给结构化结果。
-- 反例说明为什么要在 host 侧拿结构化数据：`plugins/omd-lsp-writethrough/src/index.ts:21-24, 201-216` 现在靠调 `lsp_diagnostics` 工具再解析渲染后的文本。
+- 反例说明为什么要在 host 侧拿结构化数据：`plugins/host/omd-lsp-writethrough/src/index.ts:21-24, 201-216` 现在靠调 `lsp_diagnostics` 工具再解析渲染后的文本。
 
 四步，全部在 omd 内，不改 dsh：
 
-1. host 半新包 `omd-lsp-view`，照 `plugins/omd-lsp-nav/src/index.ts:10-40` 的 internal-import 方式拿 `LspSession`（继承同一份升级即断风险）。
+1. host 半新包 `omd-lsp-view`，照 `plugins/archived/omd-lsp-nav/src/index.ts:10-40` 的 internal-import 方式拿 `LspSession`（继承同一份升级即断风险）。
 2. 新 Remote 方法 `diagnostics(cwd, path)`：`openDocument` → `session.request('textDocument/diagnostic')` + `settlePublished` 合并 → `normalizeDiagnostics` → 返回 `{ line, character, endLine, endCharacter, severity, message, code, source }[]`。
-3. client 半（手写 `window.__ModuleLoader__.load`，见 `plugins/omd-read/src/client/index.js:1-16`）：注册 renderer；`priority: 'extension'` 抢默认视图，`'builtin'` 只做下拉备选（`registry.ts:43` 按 rank 比较）。body 用 `require('@deepseek-ai/dsh-client-ui-primitives')` 的 `useCodeHighlighter` 逐行渲染，右侧标记列，hover 出消息。
+3. client 半（手写 `window.__ModuleLoader__.load`，见 `plugins/host/omd-read/src/client/index.js:1-16`）：注册 renderer；`priority: 'extension'` 抢默认视图，`'builtin'` 只做下拉备选（`registry.ts:43` 按 rank 比较）。body 用 `require('@deepseek-ai/dsh-client-ui-primitives')` 的 `useCodeHighlighter` 逐行渲染，右侧标记列，hover 出消息。
 4. 失效与刷新：以页面的 `version`/`eof` 为键请求一次；用 `workspaceFiles.changes` 流（`refs/deepseek-harness/packages/api/workspace-files/src/index.ts:340-343`）收到变更后重取。
 
 代价：约 250–400 行、0 依赖、0 上游改动。这档是唯一“便宜且立刻有用”的。

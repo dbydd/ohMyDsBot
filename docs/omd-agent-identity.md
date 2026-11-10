@@ -52,7 +52,7 @@ During the live DS-Bot demonstration on 2026-11-06, a Bot (`Chief` / `Ombra`) fi
 
 ## 4. Observed Facts Reference
 
-- `plugins/omd-issue-runner/src/jobs.ts:187`: Worker address formatting `onlyne://runner/issue/${job.workerId}`.
-- `plugins/omd-issue-runner/src/jobs.ts:330`: `workers` map from that address to the job id; `byWorkerId` reads it at line 626 and `submit` writes it at line 781.
-- `plugins/omd-sandbox-vm/src/machine.ts:662`: `openDesktop` minting 60-second ephemeral password ticket.
-- `plugins/omd-context-tavern/src/client/index.js:2367`: Wrench Studio registration via `window.dshBot.registerDetailsTab`.
+- `plugins/compute/omd-issue-runner/src/jobs.ts:187`: Worker address formatting `onlyne://runner/issue/${job.workerId}`.
+- `plugins/compute/omd-issue-runner/src/jobs.ts:330`: `workers` map from that address to the job id; `byWorkerId` reads it at line 626 and `submit` writes it at line 781.
+- `plugins/compute/omd-sandbox-vm/src/machine.ts:662`: `openDesktop` minting 60-second ephemeral password ticket.
+- `plugins/context/omd-context-tavern/src/client/index.js:2367`: Wrench Studio registration via `window.dshBot.registerDetailsTab`.

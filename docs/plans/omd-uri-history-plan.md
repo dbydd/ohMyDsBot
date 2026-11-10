@@ -38,8 +38,8 @@
 - **资源防御**：单事件 2000 字符截断 + 单页 100 消息上限 + 范围 400 事件上限，叠加 `omd-read` 50 KiB 外层熔断保护。
 
 ## 5. 实施切片
-- **切片 1（本票：源本体）**：新建 `plugins/omd-history/`（`inject: ['sessionQuery', 'internalPaths']`），注册 `source: 'history'`（`shorthand: true`，`live: false`），实现参数解析、`observeSession` 调用、转录与 JSON 两个编码器；并在 `profiles/omd/cordis.patch.yml` 加一条 `omd-history` insert 行。
-  - 验收：临时 profile 副本里 `dsh --profile omd-slice-verify --dump-config` 退出码 0、stderr 为空（不改 `~/.dsh/profiles/omd`，见 `AGENTS.md:295`）。
+- **切片 1（本票：源本体）**：新建 `plugins/omd-history/`（`inject: ['sessionQuery', 'internalPaths']`），注册 `source: 'history'`（`shorthand: true`，`live: false`），实现参数解析、`observeSession` 调用、转录与 JSON 两个编码器；并在 `profiles/omd-full/cordis.patch.yml` 加一条 `omd-history` insert 行。
+  - 验收：临时 profile 副本里 `dsh --profile omd-slice-verify --dump-config` 退出码 0、stderr 为空（不改 `~/.dsh/profiles/omd-full`，见 `AGENTS.md:295`）。
 - **切片 2（共享前置，不归本票）**：`omd-internal-paths` 补 profile row、`omd-read` 迁到 `ctx.internalPaths.resolve/read` 并删掉 `readSchemes`（`docs/omd-internal-paths.md` §5 第 2–3 条）。这是所有源的共同前置，谁先落地谁拥有，不按源各做一份。
   - 验收（web 组合不做一次性任务，`bundle/web-app/README.md:16`，因此用 headless + overlay）：`pnpm dsh --profile headless --patch /tmp/history-verify.yml "read history://"` 列会话；同法 `read history://<id>` 出转录取页、`read "history://<id>?before=<seq>&limit=5"` 取更早一页、`read "history://<id>?seq=3&format=json"` 出单事件、`read history://nope` 的报错带现有 id。overlay 只插 `omd-internal-paths` / `omd-history` / `omd-read`、按 omd 的做法关掉 `tool-fs` 的 `read`/`readImage`，并从已装 omd profile 拷贝 Magpie 模型行。
 - **切片 3（界面侧直通）**：`omd-internal-paths` 客户端自动同步并注册 `dsh-resource://history` 协议。

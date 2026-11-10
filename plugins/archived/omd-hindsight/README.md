@@ -6,7 +6,7 @@ kind: reference
 > the omp deployment, and the auto-recall path costs context every turn. Memory
 > will be redesigned from scratch; this file stays as a record of what was tried
 > and of the Hindsight server contract (banks, recall budgets, prefetch), not as
-> something to install. `dsh plugin --profile omd add …` on it again only if you
+> something to install. `dsh plugin --profile omd-full add …` on it again only if you
 > are deliberately reviving this version.
 
 # omd-hindsight
@@ -24,7 +24,7 @@ project and must not surface in unrelated work.
 ## Install
 
 ```bash
-dsh plugin --profile <profile> add /abs/path/to/plugins/omd-hindsight
+dsh plugin --profile <profile> add /abs/path/to/plugins/context/omd-hindsight
 ```
 
 The package carries its own bundle patch, so the entry inserts itself — no

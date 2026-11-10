@@ -25,7 +25,7 @@
 | `queue/{queue,queue-lock,jsonl-queue-store,queue-delivery}.ts` | `src/queue.ts` | 直接移植 | 文件/锁/死信/合并策略与宿主无关 |
 | `queue/retain-before-enqueue.ts`+`flush-presenter.ts` | — | 丢弃 | 前者是外挂命令门禁，后者是 TUI |
 | `operations/*`（13 文件） | `src/tools.ts`+`src/resource.ts`+`src/commands.ts` | 需改写 | operation-catalog/presenter 由 `defineTool` 的 `output.render`/`presentCall` 取代 |
-| `decision/*`（16 文件，System One 选 bank） | 延后 | 延后 | 依赖 omp 的 `role:judge`/`models` facade，dsh 侧对应物是 `plugins/omd-judgment`；两 bank 固定路由不需要它 |
+| `decision/*`（16 文件，System One 选 bank） | 延后 | 延后 | 依赖 omp 的 `role:judge`/`models` facade，dsh 侧对应物是 `plugins/judgment/omd-judgment`；两 bank 固定路由不需要它 |
 | `tui/*`（12 文件） | — | 丢弃 | omd 只有 web，仓库已废 TUI（`AGENTS.md:284`） |
 | `imports/*`（8 文件） | 延后 | 延后 | 导入的是 pi JSONL；dsh 自己的会话库已由 live retain 覆盖 |
 | `utils/sanitize.ts` / `utils/session.ts` | `src/sanitize.ts` / `src/banks.ts` | 直接移植 / 改写 | document id 改 `dsh-session:<sessionId>`（`SessionId` 跨 resume 稳定） |
@@ -41,7 +41,7 @@
 4. **`ctx.jobs` 不适合内部队列**。job 归 agent session 所有、可为模型所见（`packages/jobs/jobs/README.md:38-44`）。等价物：自持 JSONL + `ctx.interval`（base 的 `timer` 插件提供，`refs/.../packages/bundle/base/cordis.patch.yml:24`）。
 5. **没有 `session_shutdown`**。等价物：`ctx.effect` 逆序 unwind + `agent/disposed`；刷新用有界 `Promise.race`，默认 2s。
 6. **上下文注入的语义不同**。pi 返回 context patch；dsh 的 pre-step 把消息 append 成 `user/message` 持久事件（`agent-loop/src/agent.ts:427-435`）。所以注入内容必须能被自己识别并排除在 retain 之外——用 `createUserMessage({ source: { kind: 'memory', form: 'recall' } })`，`form: 'recall'` 本来就是"从别的会话搬来的材料"（`packages/llm/llm/src/message.ts:60-67`）。
-7. **无 `models` facade / `role:judge`**（`extensions/decision/host.ts` 依赖 omp 专有）。等价物：`plugins/omd-judgment` 的判官服务；本阶段不用。
+7. **无 `models` facade / `role:judge`**（`extensions/decision/host.ts` 依赖 omp 专有）。等价物：`plugins/judgment/omd-judgment` 的判官服务；本阶段不用。
 8. **无 per-agent 记忆 profile**（`utils/agent-profile.ts`）。dsh 的 `agent/created` 能识别子代理，但"子代理不来读记忆"只需判断 subagent 来源，不需要独立配置。
 9. **凭据解析是升级而非缺口**。`ctx.credentials.resolve(credentialRef('HINDSIGHT_API_KEY'))`，优先级 `$DSH_HOME/.credentials.yaml` > 进程环境 > cwd `.env` > `$DSH_HOME/.env`（`packages/credentials/credentials-local/src/index.ts:1-9`），替换旧插件的 40 行手搓 flat parser。
 10. **项目级参数完全不成立**。无 per-workspace 配置任何形式。需要新包（§3.2）。
@@ -50,7 +50,7 @@
 
 ## 3. 文件级实现
 
-### 3.1 `plugins/omd-memory/`（新建，一个能力一个包）
+### 3.1 `plugins/archived/omd-memory/`（新建，一个能力一个包）
 
 判据：单一用途（Hindsight 记忆），无第二个 provider、无第二个 consumer，不拆（`AGENTS.md:54-59`）。宿主入口 `src/index.ts`，本阶段无 client 半边。
 
@@ -75,12 +75,12 @@
 关键实现约束：
 
 - projection 的 `apply` 对无关事件必须**返回同一引用**；relevant 事件才新建数组（README:54）。state 上限 `retainMaxContentChars`，超出丢最旧并记 `truncated:true`。
-- 注入时机：`step === 1` 且 `turn % recallEveryNTurns === 0`，追加到 `decision.messages` 尾部（尾部追加保住前缀 KV 缓存）。prefetch（turn-stopping 预取下一轮、step 1 消费）照搬 `plugins/omd-hindsight/src/autorecall.ts:8-20`，`prefetch:false` 回落到同步路径。
+- 注入时机：`step === 1` 且 `turn % recallEveryNTurns === 0`，追加到 `decision.messages` 尾部（尾部追加保住前缀 KV 缓存）。prefetch（turn-stopping 预取下一轮、step 1 消费）照搬 `plugins/context/omd-hindsight/src/autorecall.ts:8-20`，`prefetch:false` 回落到同步路径。
 - retain 时机：`turn-stopping` 里只做"投影→job→append 到 JSONL"，await 一次文件追加（毫秒级），然后唤醒 flusher；网络投递在后台。
 - 水位线：内存 `Map<sessionId,throughSeq>`，启动时从队列尾部 job 恢复；`turn/start` 时清零 pending。
 - 工具命名：`recall`/`retain`/`reflect`，不用 `memory_*` 前缀（`AGENTS.md:220-228`：模型没见过的名字等于不存在；这三个词是 MCP 暴露面里模型已经见过的动词）。
 
-### 3.2 `plugins/omd-project-config/`（新建，独立能力）
+### 3.2 `plugins/workbench/omd-project-config/`（新建，独立能力）
 
 判据：它不是记忆的一部分——subagent 并发、判官候选等都要读它；拆开才能单独回滚（`AGENTS.md:75`）。
 
@@ -96,7 +96,7 @@
 ## 4. `memory://` 地址
 
 - 协议名 `memory`，第一段是资源种类：`bank` | `models` | `queue` | `recall`。
-- **模型侧**：`omd-memory` 在 `ctx.inject(['readSchemes'])` 里 `register('memory', handler)`，复用 `plugins/omd-read/src/schemes.ts:18-25` 的注册表，返回纯文本（read 工具负责行选择器/信封）。
+- **模型侧**：`omd-memory` 在 `ctx.inject(['readSchemes'])` 里 `register('memory', handler)`，复用 `plugins/host/omd-read/src/schemes.ts:18-25` 的注册表，返回纯文本（read 工具负责行选择器/信封）。
 - **界面侧**：将来是 `dsh-resource://memory/...`，由 `omd-project-config` 或记忆包自己的 client 半边提供 provider。两段共享 `src/address.ts` 的文法，不共享实现。
 
 ```
@@ -110,7 +110,7 @@ bank 段接受角色别名 `coding`/`user`，解析到实际 `bankId`（角色�
 
 ## 5. 配置 schema（profile 层，`Volatile` 即可在 Settings 表单里改）
 
-包内默认值只表达"没配置时是什么状态"，不含任何本机事实：地址空、bank 空、凭据名只给通用变量名。本机取值（网关地址、真实 bank id、`projectId` 钉值）一律落在 `$DSH_HOME/profiles/omd/cordis.patch.yml` 的 `omd-memory` 行；仓库副本 `profiles/omd/cordis.patch.yml` 里也不写个人值（`AGENTS.md:88-96`）。
+包内默认值只表达"没配置时是什么状态"，不含任何本机事实：地址空、bank 空、凭据名只给通用变量名。本机取值（网关地址、真实 bank id、`projectId` 钉值）一律落在 `$DSH_HOME/profiles/omd-full/cordis.patch.yml` 的 `omd-memory` 行；仓库副本 `profiles/omd-full/cordis.patch.yml` 里也不写个人值（`AGENTS.md:88-96`）。
 
 | 字段 | 类型 / 默认 | volatile | 说明 |
 |---|---|---|---|
@@ -162,13 +162,13 @@ bank 段接受角色别名 `coding`/`user`，解析到实际 `bankId`（角色�
 
 前置：Hindsight 可达（`@vectorize-io/hindsight-client` 的 `health()` 成功，或 `curl -s "$BASE/health"` 返回 2xx；端点以服务端实际部署为准），`dsh --version` 为 0.2.1-rc.2。
 
-1. **装载**：`dsh plugin --profile omd add ./plugins/omd-memory` → `dsh --profile omd` 启动无插件加载错误，工具表里出现 `recall`/`retain`/`reflect`；`$DSH_HOME/profiles/omd/cordis.patch.yml` 里出现 `omd-memory` 段，`config.baseUrl` 已填，Magpie 的 `llm-pi-ai` 段未被触碰。
+1. **装载**：`dsh plugin --profile omd-full add ./plugins/archived/omd-memory` → `dsh --profile omd-full` 启动无插件加载错误，工具表里出现 `recall`/`retain`/`reflect`；`$DSH_HOME/profiles/omd-full/cordis.patch.yml` 里出现 `omd-memory` 段，`config.baseUrl` 已填，Magpie 的 `llm-pi-ai` 段未被触碰。
 2. **配置缺失不炸**：临时把 `baseUrl` 置空重启 → 启动成功，记忆工具仍注册但调用返回"未配置"错误；会话正常结束。
 3. **`memory://` 读取**：会话里让模型 `read` `memory://bank/coding` → 返回 bank profile 与 stats，而不是"unknown resource scheme"；`read` `memory://queue` → 输出 pending 计数。
 4. **retain→recall 往返**：同一会话说"记一下：这个仓库的发布分支叫 release-x"→ 等 1 个 flush 周期 → `cat $DSH_HOME/memory/retain-queue.jsonl` 该行为空（已投递）→ 新开会话问"发布分支叫什么" → 首轮上下文出现 `<hindsight-memory>` 且含该事实。
 5. **召回不回流**：在含召回块的会话继续对话 → 库里该 document 的内容不含 `<hindsight-memory>` 字样（`curl` recall 或 `memory://recall` 自查）。
 6. **离线不阻塞轮次**：把 `baseUrl` 指向死端口 → 提一句、等一轮结束 → 轮次正常关闭（无长等），队列文件新增一条 valid job，`.dead.jsonl` 为空。
-7. **退出不被队列拖住**：`time dsh --profile omd` 起会话、说一句、退出 → 退出耗时 < `shutdownFlushMs` + 3s，job 留在盘上而非丢失。
+7. **退出不被队列拖住**：`time dsh --profile omd-full` 起会话、说一句、退出 → 退出耗时 < `shutdownFlushMs` + 3s，job 留在盘上而非丢失。
 8. **恢复投递**：改回正确 `baseUrl` 重启 → 30s 内队列排空；`.dead.jsonl` 仍为空。
 9. **项目覆盖生效**：给当前项目写入 `recallMaxTokens: 200` → 同会话下一轮召回请求的 `max_tokens` 为 200（`ctx.logger` 或 `memory://recall?...` 观察）；删掉记录 → 回到 profile 值。
 10. **子目录不串项目**：在同一 workspace 的子目录开会话 → `project:` tag 与父目录会话一致（同 git remote），`memory://bank/coding` 不变。

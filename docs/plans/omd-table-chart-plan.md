@@ -14,7 +14,7 @@
 - 启发式：`pi-tui/src/charts/chart-plan.ts:804-992`（`guessShape` 级联，先命中先赢）、`:614-616`（`shouldJudge`：≥2 个度量列）、`:4149-4229`（`worthCharting`：类目 ≥4，或画出的点 ≥9，或系列内极差 ≥3×）、`:1480-1494`（`proseLed`）、`:4898-4915`（`guessShading`）、`:4818-4849`（`guessNaming`）。
 - 单元格与列型：`pi-tui/src/charts/table-data.ts:14-115`（`Dimension`、`CellFit`、`ColumnRole`、`TableColumn`）、`:715-838`（`analyzeTable`：汇总行剥离、常量列、复述列、composition）、`:1213-1292`（`readColumn`：角色判定）。
 - 判官问题集全文：`pi-coding-agent/src/prompts/judge/auto-graph.json`（21 种 kind 定义 + title / rivals / polarity / focus / move / order / reference / label / pair / group / name / column / transpose / shading）。
-- 我们的判官：`plugins/omd-judgment/src/types.ts:24-56`（`ChoiceAnswer.probabilities` + `confidence`，门槛直接读概率）、`docs/omd-judge-context.md:29-31`（不可用或解析失败 → 按"不做"处理）。
+- 我们的判官：`plugins/judgment/omd-judgment/src/types.ts:24-56`（`ChoiceAnswer.probabilities` + `confidence`，门槛直接读概率）、`docs/omd-judge-context.md:29-31`（不可用或解析失败 → 按"不做"处理）。
 - 落点：`docs/omd-ui-backlog.md:50-56`（围栏无座位、上游不收 PR、DOM 后处理零结构化记录）、`:75-93`（`appendPluginRecord` 记录形状，通道已验证通）、`:104-118`（工具 `data.meta` 不需要许可，但只覆盖我们自己的工具结果）。
 - 渲染能力上限：`local://omd-visual-contract.md:28`（motion-ui 扩展 `chart` 只有 `bars|line|donut` 且单系列）。这就是围栏装不下图表语义的直接原因。
 
@@ -115,7 +115,7 @@ omp 是 MIT（`pi-tui/LICENSE`：Copyright (c) 2025 Mario Zechner、Copyright (c
 
 ## 8. 切片与验收
 
-1. **读取与启发式**：新建 `plugins/omd-chart-plan/`，`src/analyze.ts`（单元格 → 列角色 → `TableAnalysis`）、`src/plan.ts`（第 3、4 节的级联 + `worthCharting` + `shouldJudge`）。验收：第 2 节实测那 7 张表格逐行复现，尤其"散文表与纯标签表不出图"和"分数列出 progress"。
+1. **读取与启发式**：新建 `plugins/workbench/omd-chart-plan/`，`src/analyze.ts`（单元格 → 列角色 → `TableAnalysis`）、`src/plan.ts`（第 3、4 节的级联 + `worthCharting` + `shouldJudge`）。验收：第 2 节实测那 7 张表格逐行复现，尤其"散文表与纯标签表不出图"和"分数列出 progress"。
 2. **判官路径**：`src/judge.ts`，问题集照 `auto-graph.json` 砍到 kind / rivals / polarity / focus / order / title / `c{i}` 七类，15 s 超时，逐项门槛，`ctx.judgment.available()` 为假直接走启发式。验收：同一张表配与不配各跑一次，不配的输出与切片 1 逐字节相同；配的那次把判官原始答案与最终计划一起贴出来。
 3. **记录与渲染**：宿主在收轮时写 `plugin:omd/table-chart` 记录；客户端注册 Definition 按 `event.type` 匹配并 `buildViewNode`，按 spec 画 SVG。验收：刷新、fork、resume 三跳之后图表一致；无记录的表格渲染成普通表格。
 4. **配置面**：上述字段进 profile patch 与项目级面板，`mode: 'off'` 时切片 3 一条记录都不写。

@@ -1,7 +1,7 @@
 # 待办维护：瘦身、排序与归档
 
 2026-10-22，只读设计。上游引用写 `refs/deepseek-harness/`，本仓写仓库相对路径。
-前提（已定）：三态 `state: 'active' | 'inactive' | 'completed'`，无 `in_progress`；上游 `todo/write` 映射 `active→in_progress`、`inactive→pending`、`completed→completed`，profile 置 `allowParallelInProgress: true`（`plugins/omd-todo/src/tree.ts:226-232`）。
+前提（已定）：三态 `state: 'active' | 'inactive' | 'completed'`，无 `in_progress`；上游 `todo/write` 映射 `active→in_progress`、`inactive→pending`、`completed→completed`，profile 置 `allowParallelInProgress: true`（`plugins/host/omd-todo/src/tree.ts:226-232`）。
 
 归档时补一条跨计划决议（§9 风险 3 的处置）：**写入载荷不许做视图过滤**。`flat` 与 `detail` 必须同构，永远是整棵树；「只带 active」「只看未完成」这类过滤只允许出现在读取侧的渲染与投影（`render()`、看板投影、判官上下文），不允许出现在 `todo/write` 的参数或 detail 记录里。`omd-todo-kanban-plan.md:74` 的那条按此改写。
 

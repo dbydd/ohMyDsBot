@@ -20,20 +20,20 @@ flowchart TD
     web --> user["profile 的 cordis.patch.yml<br/>Magpie 模型清单 + 逐项启用的定制行"]
 ```
 
-整层宿主组合保存在 `plugins/omd-core`，目前不在 `bundles` 里。恢复某项能力时，把它那一行从 `omd-core` 的 patch 搬到 profile 的 patch，而不是把整层挂回来。
+整层宿主组合保存在 `plugins/archived/omd-core`，目前不在 `bundles` 里。恢复某项能力时，把它那一行从 `omd-core` 的 patch 搬到 profile 的 patch，而不是把整层挂回来。
 
 ### 组合规则
 1. **模型配置不进 omd-core**：Magpie 网关把自己的模型清单写进 profile 自己的 `cordis.patch.yml`（`llm-pi-ai` 块加 `agent-default-model`），所以那段是**生成态**。`omd-core` 里不放任何模型行。网关只追加、不碰别人写的行，自己的行写在它下面就是安全的。
 
-2. **能力行的正本是 omd-core**：`plugins/omd-core/cordis.patch.yml` 记录每种能力该用哪些包、什么顺序、什么配置。它是参考实现，不是当前组合；启用某一项时把对应的行复制到 profile 的 patch。
+2. **能力行的正本是 omd-core**：`plugins/archived/omd-core/cordis.patch.yml` 记录每种能力该用哪些包、什么顺序、什么配置。它是参考实现，不是当前组合；启用某一项时把对应的行复制到 profile 的 patch。
 
 3. **装包与挂载分两步**：`dsh plugin --profile <p> add <dir>` 只把包变成 profile 的 `link:` 依赖，不会自动进 `bundles`（只有声明了 `dsh.bundle` 的包才会）。`omd-*` 插件都没有 `dsh.bundle`，所以它们的行写在 patch 里，而不是各自的 manifest 里。
 
 4. **插件默认值机器无关**：网关地址、绝对路径、凭据、个人模型 id 只出现在 profile 的 patch 里。插件 `Config` 的默认值只表达"没配置时是什么状态"。
 
-| Profile | `dsh.profile.bundles` 声明顺序 | 用途 |
-|---|---|---|
-| `omd` | `["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app"]` | 上游 Web 组合加逐项定制；`dsh --profile omd --no-open` 起服务 |
+| Profile | 用途 |
+|---|---|
+| `omd-full` | 唯一组合，含修改过的 `ds-bot`。bundle 以 `profiles/omd-full/package.json` 为准。`dsh --profile omd-full --no-open` 起服务 |
 
 ---
 
@@ -93,7 +93,7 @@ flowchart TD
 **advisor 去重与限额**——见上表 #6。核心洞察：**建议的价值与数量成反比**，没有 guard 的 advisor 是负资产。
 
 ### 4.1 omd-core 宿主包骨架
-- 路径：`plugins/omd-core/`
+- 路径：`plugins/archived/omd-core/`
 - 产物：`cordis.patch.yml`，单个 `insert` 块列出全部能力行，加上 `omd-web-providers` 与 `web` 行的 provider 配置。没有任何模型行。
 - 包本身没有运行时 API：`src/index.ts` 只 `export {}`，`package.json` 用 `dsh.bundle.patch` 指向那份 patch。
 - MCP **不裸挂载**：`@deepseek-ai/dsh-mcp-client` 的 config 是 per-server 联合，`apply` 读 `config.reconnect`，无 config 的行会在启动时抛错。一个 server 一行，带 `transport` / `serverName` 与 `url` 或 `command`；注释里写了范例。
@@ -188,7 +188,7 @@ flowchart TD
 1. **`pnpm` 12 拒绝带未批准构建脚本的安装**：报 `ERR_PNPM_IGNORED_BUILDS`，指针是 `sharp@0.33.5`（`dsh-browser-tool` 的依赖）。
    - **解法**：`cd $DSH_HOME/profiles/<p> && pnpm approve-builds sharp`。它会把批准写进该 profile 的 `pnpm-workspace.yaml`（`allowBuilds: { sharp: true }`），之后 `dsh plugin add` 才放行。**`onlyBuiltDependencies` 这个旧键在 12 里不生效。**
 
-2. **`remove` 会重新解析整份 lockfile**：某个带未发布传递依赖的包（本机实测 `@deepseek-ai/dsh-type-meta` 404）会让 `dsh plugin --profile omd remove …` 直接失败，而同一 profile 的 `add` 却成功。
+2. **`remove` 会重新解析整份 lockfile**：某个带未发布传递依赖的包（本机实测 `@deepseek-ai/dsh-type-meta` 404）会让 `dsh plugin --profile omd-full remove …` 直接失败，而同一 profile 的 `add` 却成功。
    - **解法**：先做完全部需要的 `add`，再 `remove`；安装动作会先刷新 lockfile，之后 `remove` 就不再需要联网解析那条缺失项。
 
 3. **peer 版本门禁会静默禁用行**：dsh 启动时校验每个插件的 `peerDependencies` 是否覆盖运行时的 `0.2.1-rc.2`。不覆盖就打印 `dsh: disabling profile plugin row "<id>"` 并禁用该行。

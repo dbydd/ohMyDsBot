@@ -1,7 +1,7 @@
 /**
  * `omd-advisor/types` — the judgment-service vocabulary this package consumes.
  *
- * The provider is `plugins/omd-judgment`; this module re-declares only the
+ * The provider is `plugins/judgment/omd-judgment`; this module re-declares only the
  * slice a consumer needs, because the link farm carries no sibling `omd-*`
  * package. The `Context` module augmentation in `index.ts` merges with the
  * provider's identical declaration, so both spellings of `judgment` resolve to
@@ -98,7 +98,7 @@ export interface JudgeOptions {
 }
 
 /**
- * The judgment service handle mounted by `plugins/omd-judgment` and consumed
+ * The judgment service handle mounted by `plugins/judgment/omd-judgment` and consumed
  * here. It is optional: `ctx.get('judgment')` returns `undefined` when the
  * provider is absent, and every call site in this package treats that as
  * "do nothing" rather than throwing.

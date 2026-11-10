@@ -12,7 +12,7 @@
 
 ## 一、承载服务的证据
 
-- 源契约只有读：`plugins/omd-internal-paths/src/service.ts:28-45`（`InternalSource`）、`:66-91,134-146`（注册/解析/读）。`InternalExec` 只有 `signal`（`:22-26`），而 proc、terminal 需要的 `agent?` 会由那条共享契约加上；local 不消费它，因为全局开放读与阅读者身份无关，不要为「统一」硬塞。路径余量原样透传、允许为空：`plugins/omd-internal-paths/src/parse.ts:17-18,37`；网页桥的 `open(address)` 也不带会话（`plugins/omd-internal-paths/src/client/index.js:99-115`），所以共享的 local 在模型侧与界面侧共用一套读法。
+- 源契约只有读：`plugins/host/omd-internal-paths/src/service.ts:28-45`（`InternalSource`）、`:66-91,134-146`（注册/解析/读）。`InternalExec` 只有 `signal`（`:22-26`），而 proc、terminal 需要的 `agent?` 会由那条共享契约加上；local 不消费它，因为全局开放读与阅读者身份无关，不要为「统一」硬塞。路径余量原样透传、允许为空：`plugins/host/omd-internal-paths/src/parse.ts:17-18,37`；网页桥的 `open(address)` 也不带会话（`plugins/host/omd-internal-paths/src/client/index.js:99-115`），所以共享的 local 在模型侧与界面侧共用一套读法。
 - 私有目录落盘已有先例：`<DSH_HOME>/attachments/v1`（`refs/deepseek-harness/packages/attachment/attachment-local/README.md:55`）；`<root>/session-<hash>/…`、0700、独占创建、启动清扫（`refs/deepseek-harness/packages/spill/spill-local/README.md:54-59,91`）。home 路径用 `dshHomePath`（`refs/deepseek-harness/packages/util/home-paths/src/index.ts:160-162`）。
 - 写留在工具侧（`docs/omd-internal-paths.md:71-79`）；工具名不许自造词（`AGENTS.md:223-229`）。
 - omp 实测的 `local://` 按顶层会话分目录；这里刻意不分：需求是跨会话共享，omp 的会话目录会让另一会话读不到。目录式寻址与「根清单 + 递归排序」照搬，清单另补大小与 mtime 供自证。
@@ -23,7 +23,7 @@
 - 域是给结构化权威数据设计的：文档形态各异，没有稳定 schema，编空壳只是把校验变成摆设；坏记录还会让整个域打不开，只有 per-record 能 `backup-and-skip`（`refs/deepseek-harness/packages/storage/storage-domain/src/spec.ts:57-67`）。
 - 并发原语用不上：`update` 的原子读改写（`refs/deepseek-harness/packages/storage/storage-domain/src/domain.ts:83-89`）是给同一记录合并的；local 是整篇替换。
 - 跨进程更差：`domain/changed` 只在进程内可见（`refs/deepseek-harness/packages/storage/storage-domain/README.md:146`），JSON `single` 下两个进程会互相盖掉整个单元；逐文件 rename 至少不撕裂。
-- 可检查性：目录里的 `.md` 能被 `bash`、`grep`、编辑器读删；域里的文档只在 JSON blob 内。`project-config` 用域是对的，它存少量结构化参数（`plugins/omd-project-config/src/service.ts:63-67,153-168`）。
+- 可检查性：目录里的 `.md` 能被 `bash`、`grep`、编辑器读删；域里的文档只在 JSON blob 内。`project-config` 用域是对的，它存少量结构化参数（`plugins/workbench/omd-project-config/src/service.ts:63-67,153-168`）。
 
 ## 三、地址与命名
 
@@ -42,7 +42,7 @@
 
 ## 四、读取与列出
 
-- 文件：整篇 UTF-8 文本，空文件返回空串；源不做选择器，行窗口由 `read` 层统一处理（`plugins/omd-read/src/index.ts:394-403`）。超过 `maxDocumentBytes` 报 `5.2 MiB exceeds maxDocumentBytes (4 MiB)`，非 UTF-8 报 `not UTF-8 text`，不截断。
+- 文件：整篇 UTF-8 文本，空文件返回空串；源不做选择器，行窗口由 `read` 层统一处理（`plugins/host/omd-read/src/index.ts:394-403`）。超过 `maxDocumentBytes` 报 `5.2 MiB exceeds maxDocumentBytes (4 MiB)`，非 UTF-8 报 `not UTF-8 text`，不截断。
 - 目录：不带尾斜杠且是目录时，返回直接子项，排序，目录带 `/`。根清单为 `# Local`、`Root: <绝对路径>`、`N files available:`，每行 `- <path> — <size> — <UTC ISO mtime>`；超过 `listingLimit` 时末行 `(+K more)`。清单与列表不创建目录，根不存在时返回 `0 files available.`。
 - 缺失：`cannot read "local://x.md": no such local document (root: <绝对路径>)`。
 - 非法名字：报违反的那条，例如 `invalid local name segment ".."`、`path depth 5 exceeds 4`、`address must be relative`。
@@ -73,14 +73,14 @@
 1. 新建 `plugins/omd-local-docs/`：`src/store.ts`（无 Cordis：校验、清单、原子写、按路径链）、`src/index.ts`（`Config`、`register('local', …)`、`provide('localDocs')`）。`inject: ['internalPaths']`，不依赖 `agents`、`storageDomain`。
 2. `Config`：`root?`（默认 `dshHomePath('local','v1')`，本机取值只进 profile）、`maxDocumentBytes`（4 MiB）、`listingLimit`（200）、`maxDepth`（4）。全部机器无关默认值。
 3. `InternalSource`：`shorthand: true`；`live` 不声明（无订阅），`binary` 不声明（文本）。
-4. profile：`profiles/omd/cordis.patch.yml` 加 `omd-local-docs` 行，并 `dsh plugin --profile omd add ./plugins/omd-local-docs`；`omd-internal-paths` 自己那行与模型侧可达性由 `omd-read` 迁移那个统一切片补。
+4. profile：`profiles/omd-full/cordis.patch.yml` 加 `omd-local-docs` 行，并 `dsh plugin --profile omd-full add ./plugins/omd-local-docs`；`omd-internal-paths` 自己那行与模型侧可达性由 `omd-read` 迁移那个统一切片补。
 5. `omd-internal-paths`：`InternalSource` 加可选 `write(path, content, exec)`，服务加 `write(address, content, exec)` 只做路由；`local` 实现它，其余源保持只读。`omd-write` 只负责普通路径与内部地址的分流以及消息。
 
 验收（一次性脚本放 `/tmp`，不提交）：
 
 - `node /tmp/omd-local-check.ts` 调 `store.ts`：写入后逐字节读回；`task-log/Main.md` 嵌套创建；顺序覆盖时 `replaced` 为 true 且 `previousUpdatedAt` 存在；同名并发写后内容是其中一篇的完整版本；`../x`、`/etc/passwd`、`.tmp/x`、5 段路径分别被拒；`stat` 看到 0700/0600；清单含大小、mtime、排序与计数。
 - Cordis 冒烟：临时脚本挂 `omd-internal-paths` 与 `omd-local-docs`，`ctx.localDocs.write('a.md', 'hi')` 后 `ctx.internalPaths.read('local://a.md', {})` 返回 `hi`，根清单含 `a.md`；再注册一个只读假源，四种写失败各命中一次：`dsh-resource:///x`（语法）、`dsh-resource://nope/x`（源不存在）、`dsh-resource://ro/x`（源只读）、`local://../x`（源校验，带源名）。
-- `dsh --profile omd --dump-config` 退出码 0、stderr 为空；`dsh --profile omd` 启动无 “did not activate”。
+- `dsh --profile omd-full --dump-config` 退出码 0、stderr 为空；`dsh --profile omd-full` 启动无 “did not activate”。
 
 ## 九、风险与写面
 

@@ -4,7 +4,7 @@
  *
  * Ported from omp's `advisor/` (review plus `AdvisorEmissionGuard`). dsh has no
  * first-class judge role, so this package consumes the optional
- * `ctx.judgment` service that `plugins/omd-judgment` mounts. At each turn
+ * `ctx.judgment` service that `plugins/judgment/omd-judgment` mounts. At each turn
  * boundary the judge classifies the agent's last answer into
  * `nit` / `concern` / `blocker`; `guard.ts` then drops the empty, the
  * content-free, the repeated, and the over-budget before anything is injected.
@@ -47,7 +47,7 @@ import type { ChoiceQuestion, JudgmentService } from './types.ts'
 
 declare module '@deepseek-ai/cordis' {
   interface Context {
-    /** Judgment service, when `plugins/omd-judgment` is mounted. Optional: always read it with `ctx.get`. */
+    /** Judgment service, when `plugins/judgment/omd-judgment` is mounted. Optional: always read it with `ctx.get`. */
     judgment: JudgmentService
   }
 }

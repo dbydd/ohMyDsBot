@@ -13,13 +13,16 @@ Cordis registrations and overlays. Preserve both upstreams unchanged. A backend
 service such as userQuestions, approval, settings, or commands remains available
 when removing visible UI. UI removal targets browser rendering and shell code.
 
-Unused local plugins live in `plugins/archived/`; mounted packages and their
-transitive dependencies remain directly under `plugins/`. Keep old profile
-dependencies that reference archived locations separate from the new DS-Bot
-composition. The Lean experiment and its companion documents live in
-`archived/`. They are historical artifacts, not a development gate or a claim
-of TypeScript implementation correctness. Validate current changes through
-runtime composition and the behavior exercised by the change.
+Unused local plugins live in `plugins/archived/`. Active packages are grouped
+by role: `plugins/workbench`, `plugins/context`, `plugins/judgment`,
+`plugins/onlyne`, `plugins/compute`, and `plugins/host`. `plugins/node_modules`
+is still the shared resolution root — Node walks up from
+`plugins/<group>/<pkg>/src` to it — so sibling imports by package name keep
+working. Keep old profile dependencies that reference archived locations
+separate from the new DS-Bot composition. The Lean experiment and its companion
+documents live in `archived/`. They are historical artifacts, not a development
+gate or a claim of TypeScript implementation correctness. Validate current
+changes through runtime composition and the behavior exercised by the change.
 
 Two upstream packages carry their own runtime dependencies, and neither
 submodule ships them. Install each once after a fresh checkout:
@@ -33,10 +36,12 @@ node plugins/link-host-runtime.mjs
 The last line links the host packages a plugin imports by bare name (including
 `@deepseek-ai/dsh-scope`, which DS-Bot's host half imports) into the three
 module roots: `plugins/`, `external-plugins/`, and the repository root. The
-Onlyne plugins `omd-onlyne`, `omd-compute`, and `omd-issue-runner` live under
-`plugins/` and are linked there as siblings. `@onlyne/lib` is the published npm
-package `^3.2.0`; the script installs it from `plugins/npm-packages` into
-`plugins/node_modules`. Set `ONLYNE_ROOT` to a local Onlyne checkout to use
+Onlyne plugins live at `plugins/onlyne/omd-onlyne`,
+`plugins/compute/omd-compute`, and `plugins/compute/omd-issue-runner`. The
+script links those unscoped names, plus the siblings they import, into
+`plugins/node_modules`. `@onlyne/lib` is the published npm package `^3.2.0`;
+the script installs it from `plugins/npm-packages` into `plugins/node_modules`.
+Set `ONLYNE_ROOT` to a local Onlyne checkout to use
 `<ONLYNE_ROOT>/packages/lib` instead.
 
 ## Project Overview
@@ -130,7 +135,7 @@ flowchart LR
 `omd` 将来要发布给别人，所以仓库里不出现只在本机成立的默认值。
 
 1. **插件默认值必须机器无关。** 网关地址、绝对路径、凭据、个人模型 id 都不许写进插件的 `Config` 默认值。默认值只表达"没配置时是什么状态"：例如空候选列表意味着判断模型不可用、工具不注册，而不是指向我自己的网关。
-2. **本机取值只住在 profile。** 具体地址、模型、密钥环境变量名写进 `~/.dsh/profiles/omd/cordis.patch.yml` 的 entry `config`，或由用户在自己的配置里给。
+2. **本机取值只住在 profile。** 具体地址、模型、密钥环境变量名写进 `~/.dsh/profiles/omd-full/cordis.patch.yml` 的 entry `config`，或由用户在自己的配置里给。
 3. **每个可调项都是 `Config` 字段**，JSDoc 写清单位与默认值。需要运行时改的字段加 `.volatile()`，注意它的契约：schemastery 把该字段解析成 `Volatile<T>` 引用，读值必须走 `.get()`，改值由 Loader 提交进同一个引用、不重挂。没有配套的 `.get()` 读法和面板之前不要加，加了就是 `config.x.map is not a function`（2026-10-22 实测）。
 4. **面板自己做。** dsh 只有配置数据面（`@deepseek-ai/dsh-settings` 加 `config-editor`：按 profile entry id 出表单、脱敏、拒绝过期写入），随包发的 web 客户端没有通用渲染器（`packages/settings/settings/README.md:39`：`autoGenerate` 默认开，但 "no shipped client does so yet"）。需要界面时写自己的 client 半边，从 schema 生成，不手写字段表。
 
@@ -151,9 +156,17 @@ oh-my-dsh/                       本项目根（AGENTS.md 在这里）
 │   ├── raw -> Alexandria/raw    知识库资源层（软链）
 │   │   └── <资源>/assets/       资源自带的非文本资料（见下）
 │   └── papers -> Alexandria/papers  知识库页面层（软链）
-├── plugins/                     树外插件源码
+├── plugins/                     树外插件，按角色分组
+│   ├── workbench/               窗口与面板
+│   ├── context/                 笔记、酒馆、记忆、技能
+│   ├── judgment/                判官、角色、回合规则
+│   ├── onlyne/                  Onlyne 总线
+│   ├── compute/                 沙箱、租约、issue runner、worktree
+│   ├── host/                    内部路径与其上的工具
+│   └── archived/                未挂载的旧包
 ├── external-plugins/            第三方 dsh 插件，逐个作为 git submodule 钉版本
-├── profiles/omd/                本机 profile 的定制副本（不带 Magpie 块）
+├── profiles/omd-full/           唯一组合：钉死的 ds-bot + 本仓库插件（link:）
+├── scripts/                     pack-desktop、publish-all、内部路径 CLI
 └── docs/                        设计说明
 ```
 
@@ -361,33 +374,35 @@ patch 层是字面 `[]\n`——**空的、只有注释的 `cordis.patch.yml` 会
 
 ---
 
-### 我的 profile：只有一个 `omd`（2026-10-22）
+### 我的 profile：只有 `profiles/omd-full`
 
-| profile | bundles | 是什么 |
-|---|---|---|
-| `omd` | `@deepseek-ai/dsh-base`、`@deepseek-ai/dsh-web-app` | 上游 Web 组合。`dsh --profile omd --no-open` 起服务，默认端口 3080。模型配置（`llm-pi-ai` magpie、`agent-default-model`）在它自己的 patch 层 |
+| profile | 是什么 |
+|---|---|
+| `omd-full` | 日常和桌面用的那一份。bundle 里有 `@deepseek-ai/dsh-base`、`@deepseek-ai/dsh-web-app`、语音输入、会话检查器，以及修改过的 `ds-bot`。`dsh --profile omd-full --no-open` 起服务，默认端口 3080。清单以 `profiles/omd-full/package.json` 为准。 |
+
+不带 ds-bot 的 `profiles/omd` 已删。它不是一份能独立使用的产品，也没有发到 npm（`dsh-profile-omd` 在 registry 上不存在）。
 
 **Magpie 写进 profile 的模型清单是预期行为，看见就忽略。** 网关会把自己的 provider 清单（`llm-pi-ai` 块，约 660 行）和末尾一行 `agent-default-model` 写进每个 profile 自己的 `cordis.patch.yml`。这是故意这么干的，不影响任何东西：组合层序照旧，宿主能力照旧，不用当成缺陷去修。**Magpie 只追加，不碰别人的行**：它管的是从 `llm-pi-ai` 到 `agent-default-model` 这一段，自己加的行写在它下面就是安全的，也不要去改它那一段。换模型只改 `agent-default-model` 那一行，清单本身交给 Magpie 维护。
 
 2026-10-22 收掉了 `omdw`、`omdt`、`omd-std` 三个 profile。profile 之间不能继承，所以每多一个 profile 就多一份独立的依赖安装与组合清单。原来的 `omdw` 就地改名为 `omd`，退役目录留在 `~/.dsh/retired-profiles/2026-10-22/`。终端方向同日放弃，TUI 应用目录与它的设计文档一并删除。
 
-`omd-core` 与社区市场 `dsh-plugin` 已从 profile 的 bundles 中摘下。原先由 `omd-core` 挂载的自定义插件、社区工具和额外上游能力随之退出组合，`web` 恢复上游 provider 配置。`plugins/` 源码、原组合文件、已安装依赖及锁文件全部保留。以后按需要逐项挂载到 profile，避免一次恢复整套组合。fish 函数 `omd` 在 `~/.config/fish/functions/`，就是 `dsh --profile omd $argv`。插件用 `dsh plugin --profile omd add <pkg|path>` 装（内部转给 pnpm，声明了 `dsh.bundle` 的包会被自动追加进 bundles；没声明的只进 dependencies，要靠自己的 patch 行挂载）。
+`omd-core` 与社区市场 `dsh-plugin` 已从 profile 的 bundles 中摘下。原先由 `omd-core` 挂载的自定义插件、社区工具和额外上游能力随之退出组合，`web` 恢复上游 provider 配置。`plugins/` 源码、原组合文件、已安装依赖及锁文件全部保留。以后按需要逐项挂载到 profile，避免一次恢复整套组合。fish 函数 `omd` 在 `~/.config/fish/functions/`，就是 `dsh --profile omd-full $argv`。插件用 `dsh plugin --profile omd-full add <pkg|path>` 装（内部转给 pnpm，声明了 `dsh.bundle` 的包会被自动追加进 bundles；没声明的只进 dependencies，要靠自己的 patch 行挂载）。
 
 **当前挂载的定制**（2026-10-22 起逐项加）：`omd-judgment`（判官，原生 System One 优先、chat 兜底）、`omd-read`（`read` 与 `read_image` 合成一个工具：路径选择器、内联图片、`skill://` 等资源 scheme；profile 里把 `tool-fs` 的 `read` 与 `readImage` 关掉）、`omd-ttsr`（流式规则中止与重试）、`dsh-motion-ui`（第三方：交互组件、HTML/SVG 图解、动效与 MP4 导出）。
 
-`omd-onlyne`、`omd-compute`、`omd-issue-runner` 在 `plugins/` 下，`private: true`，不进 npm，也不进 `profiles/omd` 的依赖清单。要用时按各包 `cordis.patch.yml` 的行挂到自己的 profile。`@onlyne/lib` 用 npm 上的 `^3.2.0`，由 `link-host-runtime.mjs` 从 `plugins/npm-packages` 装进 `plugins/node_modules`；要改用本机检出就设 `ONLYNE_ROOT`。
+`omd-onlyne` 在 `plugins/onlyne/`，`omd-compute` 与 `omd-issue-runner` 在 `plugins/compute/`。三者 `private: true`，不进 npm，以 `link:` 挂在 `profiles/omd-full`。`@onlyne/lib` 用 npm 上的 `^3.2.0`，由 `link-host-runtime.mjs` 从 `plugins/npm-packages` 装进 `plugins/node_modules`；要改用本机检出就设 `ONLYNE_ROOT`。
 
 **子代理后端只用 base 自带的 `spawn` 与 `fork`。** `@deepseek-ai/dsh-subagent-claude-code`、进程级 Codex 后端、ACP、dsh-sdk 一律不挂，也不写进任何 profile 或文档示例——模型调用的唯一出口是网关。子代理容量由 `subagent` entry 的 `Config` 决定：`maxActiveSubagents` 默认 8、`maxDepth` 默认 1，两个字段都是 volatile，patch 里可改、Plugins → Subagent 页面运行时可改；容量满时 dsh 直接拒绝（`ACTIVATION_LIMIT_REACHED`），不排队——要排队由我们自己的批处理工具负责。
 
-`profiles/omd/cordis.patch.yml` 是这台机器 profile 的**定制副本**，刻意不带 Magpie 写的 `llm-pi-ai` 与 `agent-default-model` 两段；要恢复定制就把它追加回 `$DSH_HOME/profiles/omd/cordis.patch.yml`。本机取值只有 `omd-judgment` 的 `candidates` 与 `endpoints` 一处。
+`profiles/omd-full/cordis.patch.yml` 是这台机器 profile 的**定制副本**，刻意不带 Magpie 写的 `llm-pi-ai` 与 `agent-default-model` 两段；要恢复定制就把它追加回 `$DSH_HOME/profiles/omd-full/cordis.patch.yml`。本机取值只有 `omd-judgment` 的 `candidates` 与 `endpoints` 一处。
 
-**验证插件时不要改 `~/.dsh/profiles/omd`。** 并行的工人共享这一份 profile，各自追加临时行、验完删除，就会互相踩到对方正在用的行（2026-10-22 实际发生过：两个工人同时写同一份文件）。正确做法是复制一份临时 profile（如 `~/.dsh/profiles/omd-slice-verify`），把插件软链进去挂载验证，用完整个目录删掉；只读的 `--dump-config` 与一次启动都在临时 profile 里做。
+**验证插件时不要改 `~/.dsh/profiles/omd-full`。** 并行的工人共享这一份 profile，各自追加临时行、验完删除，就会互相踩到对方正在用的行（2026-10-22 实际发生过：两个工人同时写同一份文件）。正确做法是复制一份临时 profile（如 `~/.dsh/profiles/omd-slice-verify`），把插件软链进去挂载验证，用完整个目录删掉；只读的 `--dump-config` 与一次启动都在临时 profile 里做。
 
 ### 第三方插件放 `external-plugins/`
 
 别人的 dsh 插件不复制进本仓库的源码树，按名字放进 `external-plugins/<name>`，用 git submodule 钉在明确的 tag 或 commit 上；`.gitmodules` 跟着仓库走，对方升级是显式的一次 `git submodule update --remote`，不会悄悄变。
 
-装法还是 `dsh plugin --profile omd add ./external-plugins/<name>`：包若声明了 `dsh.bundle`，它的 patch 层会被自动追加进 profile 的 bundles；没声明就只进依赖，靠自己的 patch 行挂载。宿主包必需运行时（`@deepseek-ai/*`）由 `node plugins/link-host-runtime.mjs` 同时软链进 `plugins/node_modules` 与 `external-plugins/node_modules`，否则链接进来的第三方包在 import 阶段就 `ERR_MODULE_NOT_FOUND`。第三方包自己的运行时依赖（例如 `dsh-motion-ui` 的 `playwright-core`）由它自己的目录提供，缺了只影响用到那部分的功能，不拖垮启动。
+装法还是 `dsh plugin --profile omd-full add ./external-plugins/<name>`：包若声明了 `dsh.bundle`，它的 patch 层会被自动追加进 profile 的 bundles；没声明就只进依赖，靠自己的 patch 行挂载。宿主包必需运行时（`@deepseek-ai/*`）由 `node plugins/link-host-runtime.mjs` 同时软链进 `plugins/node_modules` 与 `external-plugins/node_modules`，否则链接进来的第三方包在 import 阶段就 `ERR_MODULE_NOT_FOUND`。第三方包自己的运行时依赖（例如 `dsh-motion-ui` 的 `playwright-core`）由它自己的目录提供，缺了只影响用到那部分的功能，不拖垮启动。
 
 所以 `omd` 里装的插件**不会**自动出现在别的 profile（例如 DS Bot 的网页 profile）里。
 
@@ -459,7 +474,7 @@ patch 层是字面 `[]\n`——**空的、只有注释的 `cordis.patch.yml` 会
 
 本仓库是 **GPL-3.0-or-later**（`LICENSE` 是 FSF 原文；不要改它，也不要改成 `GPL-3.0-only`——留 `or later` 是刻意的）。新增文件默认继承该许可，不写逐文件头注释；需要声明的是例外，不是常例。
 
-- **每个 `plugins/*/package.json` 都带 `"license": "GPL-3.0-or-later"`。** 新插件照写。
+- **每个插件的 `package.json`（`plugins/<group>/<name>/package.json`）都带 `"license": "GPL-3.0-or-later"`。** 新插件照写，放进对应的角色目录。
 - **借用 MIT 项目的结构或常数仍要署名。** 目前有两处：`deepseek-harness`（运行时宿主）与 `oh-my-pi`（`omd-chart-plan` 的图表启发式来源）。来源路径、版权与"重写了什么、砍了什么"写在根级 `NOTICE.md`；再引第三方代码时同处追加，不另开文件。
 - **vendored 第三方保持自己的 LICENSE/NOTICE**（`external-plugins/dsh-motion-ui/vendor/…`），不要在 vendored 文件里换成 GPL 头。
 

@@ -117,17 +117,32 @@ function pluginRecord(dir) {
   return record
 }
 
+const PLUGIN_SKIP = new Set(['archived', 'node_modules', 'npm-packages'])
+
 /**
+ * Active plugins. A package is either `plugins/<group>/<name>` or, if someone
+ * has not moved it yet, `plugins/<name>`. Archived packages are not packed.
  * @param {string} repo
  * @returns {Array<{ name: string, dir: string, client?: string, patchName?: string }>}
  */
 export function localPlugins(repo = REPO) {
   const root = join(repo, 'plugins')
   const records = []
-  for (const entry of readdirSync(root, { withFileTypes: true })) {
-    if (!entry.isDirectory() || entry.name === 'archived' || entry.name === 'node_modules' || entry.name === 'npm-packages') continue
-    const record = pluginRecord(join(root, entry.name))
+  const consider = (dir) => {
+    const record = pluginRecord(dir)
     if (record) records.push(record)
+  }
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    if (!entry.isDirectory() || PLUGIN_SKIP.has(entry.name) || entry.name.startsWith('.')) continue
+    const dir = join(root, entry.name)
+    if (existsSync(join(dir, 'package.json'))) {
+      consider(dir)
+      continue
+    }
+    for (const child of readdirSync(dir, { withFileTypes: true })) {
+      if (!child.isDirectory() || child.name === 'node_modules' || child.name.startsWith('.')) continue
+      consider(join(dir, child.name))
+    }
   }
   return records
 }
@@ -194,7 +209,7 @@ export function patchRows(yaml) {
 export function profileProblems(repo = REPO) {
   const problems = []
   const byName = new Map(localPlugins(repo).map(plugin => [plugin.name, plugin]))
-  for (const profile of ['omd', 'omd-full']) {
+  for (const profile of ['omd-full']) {
     const file = join(repo, 'profiles', profile, 'cordis.patch.yml')
     if (!existsSync(file)) {
       problems.push(`profiles/${profile}/cordis.patch.yml is missing`)
@@ -220,7 +235,8 @@ export function profileProblems(repo = REPO) {
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
   const deps = manifest.dependencies ?? {}
   for (const plugin of byName.values()) {
-    if (!Object.values(deps).some(spec => typeof spec === 'string' && spec.endsWith(`/plugins/${basename(plugin.dir)}`))) continue
+    const pluginRel = relative(join(repo, 'plugins'), plugin.dir).replaceAll('\\', '/')
+    if (!Object.values(deps).some(spec => typeof spec === 'string' && spec.endsWith(`/plugins/${pluginRel}`))) continue
     if (deps[plugin.name] === undefined) {
       problems.push(`profiles/omd-full/package.json does not depend on ${plugin.name}`)
     }
@@ -241,7 +257,6 @@ export function secretProblems(repo = REPO) {
   const files = [
     join(repo, 'profiles', 'omd-full', 'cordis.patch.yml'),
     join(repo, 'profiles', 'omd-full', 'package.json'),
-    join(repo, 'profiles', 'omd', 'cordis.patch.yml'),
   ]
   for (const file of files) {
     if (!existsSync(file)) continue
@@ -487,6 +502,10 @@ export function stageDesktop(options) {
   // dsh-motion-ui 0.8.9 declares compatibility only through dsh 0.2.1-rc.5.
   // The pinned desktop host is dsh 0.2.2-rc.1, and an own bundle that the
   // loader skips aborts startup. Ship the package, do not require the bundle.
+  // dsh-motion-ui 0.8.9 peers stop at dsh 0.2.1-rc.5, so the loader skips it
+  // and an own bundle that was skipped aborts startup. The inspector profile
+  // 0.2.2-rc.1 has no engines.dsh and no @deepseek-ai/dsh-* peers, so
+  // evaluatePluginCompatibility does not skip it on the pinned host.
   const skippedBundles = new Set(['dsh-motion-ui'])
   const extra = plan.bundles.filter(name => !present.includes(name) && !skippedBundles.has(name))
   const nextBundles = [...present, ...extra].map(name => `'${name}'`).join(', ')
