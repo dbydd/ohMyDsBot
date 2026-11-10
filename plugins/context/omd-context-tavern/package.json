@@ -1,0 +1,40 @@
+{
+  "name": "@dbydd/omd-context-tavern",
+  "version": "0.1.0",
+  "description": "Context Tavern web panel: epoch bar, lorebook catalog and Author's Note editor, mounted as a DS-Bot details tab and an Agent-mode sidebar overlay",
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./document": "./src/document.ts",
+    "./store": "./src/store.ts",
+    "./client": "./src/client/index.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "platform": "web"
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/dsh-home-paths": "*",
+    "zod": "*"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/dsh-home-paths": "*",
+    "zod": "*"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dbydd/ohMyDsBot.git",
+    "directory": "plugins/context/omd-context-tavern"
+  }
+}

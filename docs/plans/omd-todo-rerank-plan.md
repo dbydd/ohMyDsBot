@@ -16,9 +16,9 @@
 
 ## 1. 前提核对：待办现在注入在哪
 
-**目前没有任何常驻注入。** `omd-todo` 只注册工具、投影、路径源（`plugins/omd-todo/src/index.ts` 的 `apply` 末四行）；上游 `tool-todo` 也只注册 `todos` 投影（`refs/deepseek-harness/packages/todo/tool-todo/src/index.ts:123-134`）。模型看到待办只有两条路：`todo_write` 的返回 `todoTreeEcho`（树序、`content + status + active`，不含 goal，`tree.ts:322-330`）；按需读 `dsh-resource://todo/<session>`（`render.ts:30-52`，计数头在最前、正文按树序）。另外两个读者是看板与判官上下文（配方第 2 段超 30 条**截尾**，`docs/omd-judge-context.md:14`）。
+**目前没有任何常驻注入。** `omd-todo` 只注册工具、投影、路径源（`plugins/host/omd-todo/src/index.ts` 的 `apply` 末四行）；上游 `tool-todo` 也只注册 `todos` 投影（`refs/deepseek-harness/packages/todo/tool-todo/src/index.ts:123-134`）。模型看到待办只有两条路：`todo_write` 的返回 `todoTreeEcho`（树序、`content + status + active`，不含 goal，`tree.ts:322-330`）；按需读 `dsh-resource://todo/<session>`（`render.ts:30-52`，计数头在最前、正文按树序）。另外两个读者是看板与判官上下文（配方第 2 段超 30 条**截尾**，`docs/omd-judge-context.md:14`）。
 
-所以"可读端 = 前"依据的是四处的取舍方式，不是 token 距离：四处都从头部开始读（计数行 → 第一条就是要做的事）；唯一有预算的读者裁的是尾部，排后面的条目最先消失。若今后要常驻注入，只有两条既有通道——system prompt 分节（`plugins/omd-context-notes/src/index.ts:55,68`，`sectionOrder: 85`）或 pre-step 消息（`plugins/omd-hindsight/src/index.ts:73`）；两者都把整块放在当前请求之前、整块一次读完，截断与阅读顺序的差异比"离请求更近"更硬。
+所以"可读端 = 前"依据的是四处的取舍方式，不是 token 距离：四处都从头部开始读（计数行 → 第一条就是要做的事）；唯一有预算的读者裁的是尾部，排后面的条目最先消失。若今后要常驻注入，只有两条既有通道——system prompt 分节（`plugins/context/omd-context-notes/src/index.ts:55,68`，`sectionOrder: 85`）或 pre-step 消息（`plugins/context/omd-hindsight/src/index.ts:73`）；两者都把整块放在当前请求之前、整块一次读完，截断与阅读顺序的差异比"离请求更近"更硬。
 
 待验证的假设：若注入块变长且模型倾向回读尾部，这条要翻转。落地后用"实际先动的那条在排序里的位置"观测一次即可判断，不加配置开关。
 
@@ -32,8 +32,8 @@
 | 每 session 写入 FIFO；维护在主路径 `#apply` 内跑 | `service.ts:122-128, 138-162` |
 | 状态秩 + 同秩保序已由维护定，五个读者共用同序 | `maintenance-plan:30` |
 | 条目无时间戳，年龄只能从日志折叠（事件带 `time`） | `maintenance-plan:23` |
-| `turn-stopping` handler 可 async 并 await 判官 | `plugins/omd-unexpected-stop/src/index.ts:143` |
-| 判官一次最多 16 个 question，超出切片、state 每片重发 | `plugins/omd-judgment/src/index.ts:90`，`native.ts:206-215` |
+| `turn-stopping` handler 可 async 并 await 判官 | `plugins/archived/omd-unexpected-stop/src/index.ts:143` |
+| 判官一次最多 16 个 question，超出切片、state 每片重发 | `plugins/judgment/omd-judgment/src/index.ts:90`，`native.ts:206-215` |
 
 实测（`POST 127.0.0.1:3425/v1/systemone`，`group/decider` → `clef-flash-oQ4e`）：5 条 active 单组（labels = `content — goal`，state 含用户上一句）`475 in / 0 out`、`0.18s`，分布 `.9150/.0384/.0260/.0135/.0072`（和 `1.0001`，margin `.8766`）——**重排前** ①②③④⑤ → **重排后** ①③②⑤④（仅 ②③ 交换）。一次请求 3 个 question（根组 + 两个子组）`561 in / 0 out`：`0.9857/0.0143`、`0.8815/0.0738/0.0448`、`0.8176/0.1824`。24/32/40 个选项均返回完整分布（和 `.9997/1.0003/.9996`，无缺项），但首位概率随集合摊薄（3 项 `.88`、5 项 `.92`、24 项 `.31`、40 项 `.26`）→ 分组而非堆大集合。同一请求重发逐字节相同。
 
@@ -74,14 +74,14 @@ questions[groupKey] = {
 
 ## 7. 缓存与成本
 
-键 = `sha256(state + questions)`（`plugins/omd-judgment/src/cache.ts:20-24`），state 含整棵树与用户上一句，树变键就变；哈希门在前，缓存只防"同一棵树重复调"，别指望它省掉真实重排。TTL 600s（`index.ts:88`）。单组 5 条约 475 输入 token、0 输出；选项顺序不影响分布（逆序请求相同），建问题时按 content 字典序排 labels，同组键稳定。
+键 = `sha256(state + questions)`（`plugins/judgment/omd-judgment/src/cache.ts:20-24`），state 含整棵树与用户上一句，树变键就变；哈希门在前，缓存只防"同一棵树重复调"，别指望它省掉真实重排。TTL 600s（`index.ts:88`）。单组 5 条约 475 输入 token、0 输出；选项顺序不影响分布（逆序请求相同），建问题时按 content 字典序排 labels，同组键稳定。
 
 ## 8. 切片与验收
 
 | 切片 | 文件 | 改动 |
 |---|---|---|
-| S1 | `plugins/omd-todo/src/types.ts`、`service.ts` | `'judge'` origin + 置换分支（多重集校验、字段取当前树） |
-| S2 | `plugins/omd-todo/src/service.ts` | 折叠维护每节点 `lastTouched`，维护共用 |
+| S1 | `plugins/host/omd-todo/src/types.ts`、`service.ts` | `'judge'` origin + 置换分支（多重集校验、字段取当前树） |
+| S2 | `plugins/host/omd-todo/src/service.ts` | 折叠维护每节点 `lastTouched`，维护共用 |
 | S3 | 新 `plugins/omd-todo-order` | 哈希门、窗口、`ensureFresh` 单飞、写回、`turn-stopping` listener、`enabled/minMargin/maxGroupOptions/window` |
 
 依赖：三态迁移（维护线 S1）先落地；重排按语义写，迁移前后都成立。

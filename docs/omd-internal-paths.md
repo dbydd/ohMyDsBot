@@ -50,7 +50,7 @@ interface InternalPathsService {
 
 ## 5. 迁移与首个消费者
 
-1. 新建 `plugins/omd-internal-paths/`（宿主半边 + client 半边），实现第 3、4 节。
+1. 新建 `plugins/host/omd-internal-paths/`（宿主半边 + client 半边），实现第 3、4 节。
 2. `omd-read` 删掉自己的 scheme 表，改为 `inject: ['internalPaths']`；读地址时先问 `resolve`，命中就 `read`，未命中按文件路径处理。`skill` 源的注册留在 `omd-read`（它依赖 `ctx.skills`），只是改为注册进 `ctx.internalPaths`，并声明 `shorthand: true`。
 3. 兼容：`ctx.readSchemes` 不再提供；仓库内没有别的消费者，直接删除，不留别名。
 4. `omd-memory` 之后把 `memory` 源注册进来即可获得两侧能力，不需要再碰 `omd-read` 或客户端。

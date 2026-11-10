@@ -1,7 +1,7 @@
 /**
  * Copied judgment vocabulary for `omd-auto-thinking`.
  *
- * Reproduced verbatim from `plugins/omd-judgment/src/types.ts` so this package
+ * Reproduced verbatim from `plugins/judgment/omd-judgment/src/types.ts` so this package
  * does not import another `omd-*` package. The host's `Context` augmentation
  * merges automatically when `omd-judgment` is present.
  *

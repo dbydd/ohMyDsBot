@@ -105,7 +105,7 @@ endpoint, a timeout, or a policy.
 
 ```sh
 node plugins/link-host-runtime.mjs          # link @deepseek-ai/dsh-web into plugins/node_modules
-dsh plugin --profile <p> add "$PWD/plugins/omd-web-providers"
+dsh plugin --profile <p> add "$PWD/plugins/archived/omd-web-providers"
 ```
 
 ## Known limitations

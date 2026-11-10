@@ -7,8 +7,8 @@
 
 ## 0. 三个前置事实，会改变结论
 
-1. `[观察]` 模型侧今天还读不了内部路径：`plugins/omd-read/src/index.ts:289-296` 仍然 `ctx.provide('readSchemes', …)`，`plugins/omd-internal-paths` 是仓库里唯一提到 `internalPaths` 的包，且没有任何源注册。`docs/omd-internal-paths.md:51-56` 写明了迁移步骤。不先做这一步，`vault://` 只存在于界面侧。
-2. `[观察]` 客户端桥接只吐一帧：`plugins/omd-internal-paths/src/client/index.js:99-116` 的 `open` yield 一次就返回，而 `live` 源“界面侧跟随变化”的承诺写在 `src/service.ts:34-35` 与 `docs/omd-internal-paths.md:47`，尚未实现。所以笔记的内容刷新不能指望资源流，必须自带轮询或手动刷新。
+1. `[观察]` 模型侧今天还读不了内部路径：`plugins/host/omd-read/src/index.ts:289-296` 仍然 `ctx.provide('readSchemes', …)`，`plugins/host/omd-internal-paths` 是仓库里唯一提到 `internalPaths` 的包，且没有任何源注册。`docs/omd-internal-paths.md:51-56` 写明了迁移步骤。不先做这一步，`vault://` 只存在于界面侧。
+2. `[观察]` 客户端桥接只吐一帧：`plugins/host/omd-internal-paths/src/client/index.js:99-116` 的 `open` yield 一次就返回，而 `live` 源“界面侧跟随变化”的承诺写在 `src/service.ts:34-35` 与 `docs/omd-internal-paths.md:47`，尚未实现。所以笔记的内容刷新不能指望资源流，必须自带轮询或手动刷新。
 3. `[观察]` `profiles/omd/cordis.patch.yml` 里没有 `omd-internal-paths` 行，最后一个 insert 块到 `omd-chat-shell` 为止。挂载本身是 P0 的一部分。
 
 ## 1. 能力清单
@@ -144,7 +144,7 @@ excluded: true|false, error?: string
 - 缓存文件 0.6～1.2 KB/篇，3 000 篇约 2～4 MB。
 - 单文件上限：索引只解析 ≤ 1 MiB 的 `.md`，且笔记数超过 50 000 时打一条告警继续（不设硬截断）。附件读字节上限 8 MiB/张。
 
-remote 方法（客户端用 `descriptor()` 声明，照 `plugins/omd-project-config/src/client/index.js:144-198` 的成熟写法；模型侧的原文读取**不**在这里，走 `internalPaths.read`）：
+remote 方法（客户端用 `descriptor()` 声明，照 `plugins/workbench/omd-project-config/src/client/index.js:144-198` 的成熟写法；模型侧的原文读取**不**在这里，走 `internalPaths.read`）：
 
 ```text
 vaults()                                   → { id, root, notes, excluded, indexedAt, indexing }[]

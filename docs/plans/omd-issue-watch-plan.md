@@ -6,7 +6,7 @@
 
 - `[观察]` 今天的 todo 只够模型自用：`TodoItem{content,status}` 无身份、`todo/write` 整表快照、last-write-wins（`refs/deepseek-harness/packages/todo/tool-todo/src/types.ts:11-26,28-46`）；`[契约，来自待办能力]` `ctx.todoList.replace(session, items, origin:'issue')`、`read(session, origin?)` 必须：`session` 能离线取得（`ctx.sessions.get` 或持久层，**不得要求 `resolveAgent`**）、按 origin **原子合并**、按 `id` **原地更新**、写待办不排 turn。
 - `[观察]` 忙闲可读 `agent.status`（`refs/deepseek-harness/packages/core/agent/src/runtime-types.ts:109,172,191`）；`turn/start`、`turn/end` 可经 `session/event` 观察，验收用来证明"没有唤醒"（`refs/deepseek-harness/packages/core/session/src/index.ts:74`）。
-- `[观察]` 持久状态用 `ctx.storageDomain`，落 `~/.dsh/storages/<domain>.json`（`plugins/omd-project-config/src/service.ts:47-65,114`）；凭据阶梯是 `$DSH_HOME/.credentials.yaml` > 进程环境 > cwd `.env` > `$DSH_HOME/.env`（`refs/deepseek-harness/packages/credentials/credentials-local/src/index.ts:2-10`）。
+- `[观察]` 持久状态用 `ctx.storageDomain`，落 `~/.dsh/storages/<domain>.json`（`plugins/workbench/omd-project-config/src/service.ts:47-65,114`）；凭据阶梯是 `$DSH_HOME/.credentials.yaml` > 进程环境 > cwd `.env` > `$DSH_HOME/.env`（`refs/deepseek-harness/packages/credentials/credentials-local/src/index.ts:2-10`）。
 - `[假设，RepoBindingPlan / GithubSourcePlan]` `repoBinding(cwd)` → `bound{host,owner,name,slug}` | `unbound{reason}`；`ctx.github.listIssues({repo,state,labels,assignee,since})` → `{ rows: IssueRow[], truncated: boolean, notModified: boolean, staleMs?: number }`（`IssueRow` 含 `number/title/state/stateReason?/labels/assignees/updatedAt/url/isPull`），错误 `unconfigured|unauthorized|rate-limited|not-found-or-forbidden|network`。ETag 与单飞留在 github 客户端内部，不由调用方持有。
 
 ## 2. 为什么不是 (a)/(b)
@@ -31,7 +31,7 @@ interface CheckResult { slug: string | null; checkedAt: string; added: number; u
   {"id":"issue:owner/repo#101","text":"#101 内存泄漏","status":"pending","active":true,"origin":"issue","source":{"kind":"issue","repo":"owner/repo","number":101},"why":"2026-10-22 从 closed 重新打开，标签 bug","goal":"定位泄漏点并补回归；issue 关闭即视为完成"} ]
 ```
 
-配置字段（`plugins/omd-project-config/src/schema.ts` 增 5 行，默认机器无关）：
+配置字段（`plugins/workbench/omd-project-config/src/schema.ts` 增 5 行，默认机器无关）：
 
 | 字段 | 默认 | 说明 |
 |---|---|---|
@@ -84,7 +84,7 @@ interface CheckResult { slug: string | null; checkedAt: string; added: number; u
 ## 8. 切片与验收
 1. **纯逻辑**：`plugins/omd-issues/src/fingerprint.ts`（指纹与上表七种迁移）、`entries.ts`（条目生成、排序、`why`/`goal` 文案；标题截断 120 字符并剥离控制字符）。无 Cordis 依赖。
 2. **状态与调度**：`storage.ts`（`omd_issue_watch` 域、`watches` 表、500 条淘汰）、`timer.ts`（单 timer、每 root 单飞、退避）、`writer.ts`（读旧条目 → 按 id 合并 → `todoList.replace(session, items, 'issue')`）、`index.ts`（`inject: ['github','projectConfig','storageDomain']`，发布 `ctx.issueWatch`）。
-3. **接入**：`schema.ts` 增 5 字段；client 半边照 `plugins/omd-project-config/src/client/index.js:528-535` 加 `/issues-check`（action）与"主会话"选择器。依赖顺序：待办能力（无唤醒写 + origin 合并）→ `github` 源与仓库绑定（含 `state:'all'` 与 `truncated`）→ 本切片；`omd-read` 迁移只影响模型能否 `read issue://N` 看正文，不在关键路径。
+3. **接入**：`schema.ts` 增 5 字段；client 半边照 `plugins/workbench/omd-project-config/src/client/index.js:528-535` 加 `/issues-check`（action）与"主会话"选择器。依赖顺序：待办能力（无唤醒写 + origin 合并）→ `github` 源与仓库绑定（含 `state:'all'` 与 `truncated`）→ 本切片；`omd-read` 迁移只影响模型能否 `read issue://N` 看正文，不在关键路径。
 
 验收（临时 profile，不改 `~/.dsh/profiles/omd`，见 `AGENTS.md:295`）：
 

@@ -1,6 +1,6 @@
 # 打包 OMD 桌面应用
 
-日常组合是 `profiles/omd-full`：官方 dsh bundle、钉在 `95602e97` 的修改版 ds-bot（`ctx.provide('dsBot')` 与 `hub.registerDetailsTab`；公开 npm 上的 ds-bot 没有这两样），以及本仓库的 omd 插件。脚本在 `scripts/pack-desktop.mjs`。它不改 `ds-bot` 子模块的提交，只复制 `ds-bot/app` 再叠上这套组合。
+日常组合是 `profiles/omd-full`：官方 dsh bundle、钉在 `95602e97` 的修改版 ds-bot（`ctx.provide('dsBot')` 与 `hub.registerDetailsTab`；公开 npm 上的 ds-bot 没有这两样），以及本仓库的 omd 插件。插件按角色放在 `plugins/<group>/<name>`（`workbench`、`context`、`judgment`、`onlyne`、`compute`、`host`），profile 的 `link:` 指向这些目录。脚本在 `scripts/pack-desktop.mjs`。它不改 `ds-bot` 子模块的提交，只复制 `ds-bot/app` 再叠上这套组合。包名、profile 行的 `name`、客户端 `load({ id })` 仍是三处相同的标识，不跟目录一起改。
 
 ## 为什么界面会变成原版 DS Bot
 

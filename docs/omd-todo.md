@@ -1,6 +1,6 @@
 # 待办：文本顺序即注意力
 
-这份文档记一条贯穿待办、笔记、记忆三处的原则，以及由它推出的几个决定。模型字段与行为以 `plugins/omd-todo/README.md` 为准；这里只写“为什么这样排”。
+这份文档记一条贯穿待办、笔记、记忆三处的原则，以及由它推出的几个决定。模型字段与行为以 `plugins/host/omd-todo/README.md` 为准；这里只写“为什么这样排”。
 
 ## 原则
 
@@ -25,4 +25,4 @@
 
 `state: 'active' | 'inactive' | 'completed'`——单一轴，取代原先 `status`（pending/in_progress/completed）加布尔 `active` 的组合，因为那个组合空间里大半状态没有意义。
 
-上游 `todo/write` 只认三态字符串，映射为：`active → in_progress`、`inactive → pending`、`completed → completed`。**上游那条 `at most one in_progress` 校验碰不到我们**：`omd-todo` 自己 `session.append('todo/write', …)`（`plugins/omd-todo/src/service.ts:160`），不走上游 `todo_write` 工具；而那条工具本来就在 `omd-tools-policy` 的拒绝名单里。所以并行与否只看我们自己的配置 `allowParallelActive`，profile 里定为 `true`（并行子任务是常态，单活跃纪律会逼模型把正在并行推进的条目写成 `inactive`）。
+上游 `todo/write` 只认三态字符串，映射为：`active → in_progress`、`inactive → pending`、`completed → completed`。**上游那条 `at most one in_progress` 校验碰不到我们**：`omd-todo` 自己 `session.append('todo/write', …)`（`plugins/host/omd-todo/src/service.ts:160`），不走上游 `todo_write` 工具；而那条工具本来就在 `omd-tools-policy` 的拒绝名单里。所以并行与否只看我们自己的配置 `allowParallelActive`，profile 里定为 `true`（并行子任务是常态，单活跃纪律会逼模型把正在并行推进的条目写成 `inactive`）。

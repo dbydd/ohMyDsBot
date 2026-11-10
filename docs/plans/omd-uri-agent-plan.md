@@ -25,8 +25,8 @@ agent://<id>                      # 状态头 + 最终产出（全文）
 agent://<id>/status               # 只有状态行，不取产出
 ```
 例：`agent://`、`agent://6d1f…a7`、`agent://6d1f…a7/status`，界面规范形 `dsh-resource://agent/`。
-名册走 `ctx.subagents.listChildren(调用者.id)`——只读调用者自己的 `subagentCatalog`，不扫语料、不跨项目。调用者身份从 `InternalExec.agent` 来（§5）：模型侧由 agent loop 在 `ToolExecution.agent` 上给出（`packages/core/tools/src/index.ts:338-340`，实填在 `:1418-1425`），`omd-read` 把它转交；界面侧 `readRemote` 没有 agent（`plugins/omd-internal-paths/src/service.ts:156-158`），此时空名册必须报错并给出 `agent://<id>` 的走法，不得退化成"全机子代理列表"。
-错误形态一律由本源 `throw`，界面侧自然成一帧失败：`provider.open` 已经 catch Host read 的拒绝并转成 `internal-paths/read-failed` 帧（`plugins/omd-internal-paths/src/client/index.js:86-116`），本源不得自己拼帧、也不得把错误塞进正文——同一个地址在模型侧与界面侧必须是同一种结局。
+名册走 `ctx.subagents.listChildren(调用者.id)`——只读调用者自己的 `subagentCatalog`，不扫语料、不跨项目。调用者身份从 `InternalExec.agent` 来（§5）：模型侧由 agent loop 在 `ToolExecution.agent` 上给出（`packages/core/tools/src/index.ts:338-340`，实填在 `:1418-1425`），`omd-read` 把它转交；界面侧 `readRemote` 没有 agent（`plugins/host/omd-internal-paths/src/service.ts:156-158`），此时空名册必须报错并给出 `agent://<id>` 的走法，不得退化成"全机子代理列表"。
+错误形态一律由本源 `throw`，界面侧自然成一帧失败：`provider.open` 已经 catch Host read 的拒绝并转成 `internal-paths/read-failed` 帧（`plugins/host/omd-internal-paths/src/client/index.js:86-116`），本源不得自己拼帧、也不得把错误塞进正文——同一个地址在模型侧与界面侧必须是同一种结局。
 `/status` 对活子代理走注册表、不碰日志；冷子代理付一次日志读，写进 grammar 说明，不假装便宜。
 渲染固定小节：id / parent / mode / label / status / last-turn（`completed｜aborted(user)｜error｜max-tokens｜interrupted｜open`，`session/src/types.ts:202-230`）/ 耗时 / `## Result`。非 text 的 content block 打一行 `[tool-call name]`，不静默丢弃。
 mode/label 取子自身描述符（`foldSubagentDescriptor(events.slice(inheritedEventCount))`）；父名册的行只用于交叉核对，冲突以子为准。描述符缺失或版本不认识时写 `mode: unknown (descriptor missing)`，不猜成 one-shot。
@@ -55,8 +55,8 @@ mode/label 取子自身描述符（`foldSubagentDescriptor(events.slice(inherite
 
 ## 5. 实施切片
 
-1. **共享切片（不是本源独有）**：`plugins/omd-internal-paths/src/service.ts:23-26` 的 `InternalExec` 加 `agent?: Agent`；`omd-read` 从 `ctx.readSchemes` 迁到 `ctx.internalPaths` 时把 `{ signal: exec.signal, agent: exec.agent }` 传下去（`docs/omd-internal-paths.md:51-56` 步骤 2-3）。这是**一个**切片，谁先落谁拥有；本源只消费，不改 `omd-read`、不改 `omd-internal-paths`。（与 ProcUriPlan 已就此对齐。）
-2. 新包 `plugins/omd-agent-paths/`：`src/index.ts`（`name='omd-agent-paths'`，`inject=['internalPaths']`，`agents`/`subagents`/`sessionQuery` 只在读时 `ctx.get`）、`src/read.ts`（名册 + 定位 + 切片 + 折叠）、`src/render.ts`（两种视图）、`src/types.ts`。注册 `agent`，`shorthand: true`，`live: false`——界面半边今天只开一帧、不跟随（`plugins/omd-internal-paths/src/client/index.js:99-116`），写 `true` 就是谎。
+1. **共享切片（不是本源独有）**：`plugins/host/omd-internal-paths/src/service.ts:23-26` 的 `InternalExec` 加 `agent?: Agent`；`omd-read` 从 `ctx.readSchemes` 迁到 `ctx.internalPaths` 时把 `{ signal: exec.signal, agent: exec.agent }` 传下去（`docs/omd-internal-paths.md:51-56` 步骤 2-3）。这是**一个**切片，谁先落谁拥有；本源只消费，不改 `omd-read`、不改 `omd-internal-paths`。（与 ProcUriPlan 已就此对齐。）
+2. 新包 `plugins/omd-agent-paths/`：`src/index.ts`（`name='omd-agent-paths'`，`inject=['internalPaths']`，`agents`/`subagents`/`sessionQuery` 只在读时 `ctx.get`）、`src/read.ts`（名册 + 定位 + 切片 + 折叠）、`src/render.ts`（两种视图）、`src/types.ts`。注册 `agent`，`shorthand: true`，`live: false`——界面半边今天只开一帧、不跟随（`plugins/host/omd-internal-paths/src/client/index.js:99-116`），写 `true` 就是谎。
 3. `Config`：`statusStaleAfterMs`（默认 0=不判超时）。无本机值。
 4. 挂载：`profiles/omd/cordis.patch.yml` 里给 `omd-internal-paths` 与本源各一行（profile 今天两者都没有）。
 5. 不动的：`omd-agents-hub` 的 `omdAgents` 投影保留为面板名册，结果字段恒为 `null`（`fold.ts:57-59`），与本源零重合；`list_agents` 工具保留，本源补的是"通知滚走后还能取结果"这个工具缺口。

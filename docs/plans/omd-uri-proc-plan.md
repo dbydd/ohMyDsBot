@@ -11,8 +11,8 @@
 - 输出环坐标：`refs/deepseek-harness/packages/jobs/jobs/src/types.ts:227-240`（`readAt` 返回整块 chunk、`next` 是下一个绝对字节偏移、`lossy`）。
 - 现有渲染口径（必须对齐）：`refs/deepseek-harness/packages/jobs/tool-jobs/src/index.ts:360-363`（名册行 `<id> [<kind>] <status> — <label>`，空为 `(no background jobs)`）、`render.ts:76-83`（丢弃 `log` 通道、stderr 归到 `[stderr]`、丢失字节时给 spill 提示）、`render.ts:56-60`（`[status: …, <detail>]`）。
 - `ctx.terminals`：`refs/deepseek-harness/packages/terminal/terminal/src/index.ts:105-137`；`list(owner):308`、`read(owner,id,{offset,count}):263`、`kill:285`、`signal:274`；快照 `types.ts:133-145`、回滚页 `types.ts:103-123`；id 形状 `pty-<n>`（`index.ts:166`）。围栏是 `Agent` 对象同一性（`:310`），不是字符串。
-- 内部路径契约：`plugins/omd-internal-paths/src/service.ts:22-45`（`InternalExec` 今天只有 `signal`）、`parse.ts:17-18`（源名 `[a-z0-9-]+`）。
-- 组合事实：`ctx.jobs` 恒在（`refs/deepseek-harness/packages/bundle/base/cordis.patch.yml:96-97`、`:289-290`）；terminal 是可选行，只在 `plugins/omd-core/cordis.patch.yml:98-105`，profile 的 patch 里没有——所以 terminal 半边默认休眠，不能假设它在。`omd-internal-paths` 那行已经挂在 `profiles/omd/cordis.patch.yml:83-86`（`~/.dsh/profiles/omd` 同步有，`--dump-config` 退出 0、stderr 空），不需要再加。
+- 内部路径契约：`plugins/host/omd-internal-paths/src/service.ts:22-45`（`InternalExec` 今天只有 `signal`）、`parse.ts:17-18`（源名 `[a-z0-9-]+`）。
+- 组合事实：`ctx.jobs` 恒在（`refs/deepseek-harness/packages/bundle/base/cordis.patch.yml:96-97`、`:289-290`）；terminal 是可选行，只在 `plugins/archived/omd-core/cordis.patch.yml:98-105`，profile 的 patch 里没有——所以 terminal 半边默认休眠，不能假设它在。`omd-internal-paths` 那行已经挂在 `profiles/omd/cordis.patch.yml:83-86`（`~/.dsh/profiles/omd` 同步有，`--dump-config` 退出 0、stderr 空），不需要再加。
 
 ## 2. 地址语法
 ```
@@ -33,7 +33,7 @@ dsh-resource://proc/<id>/output     单条详情去掉头部，只有作业输�
 - 头部固定三段，缺一不可：状态行（含 `detail`）、`scope: session <id>` 或 `scope: unfenced`、`output:` 窗口与 `action:`。`scope` 不是装饰：`exec.agent` 缺席时名册只剩无主作业，没这一行就表现为"作业消失了"，没人能诊断。
 - 名册：`ctx.jobs.list(agent.id)` 逐行用 `job_list` 的同一格式；`ctx.terminals?.list(agent)` 逐行用 `terminal_list` 的同一格式（`render.ts:166-176`）。两个 section 各自带条数，空的 section 省略；`ctx.jobs` 缺席时写 `jobs: unavailable (no ctx.jobs)`。
 - 详情：`get` 取头部；正文按上一条红线读，再按 `tool-jobs/render.ts:76-83` 的同一口径渲染：丢 `log` 通道、stderr 归组、`lossy` 或任一 chunk 带 `gapBefore` 时在末尾给 `[some output was dropped from memory; full output: …]`。名册同样带 `scope:` 行。
-- 保留窗口就是上限（运行期 256 KiB、结算后 16 KiB，`docs/subsystems/jobs.md:386`）：路径读到的字节数不超过环，不另设截断；再往下的行/字节窗口由 read 工具自己做（`plugins/omd-read/src/index.ts:395-403`）。
+- 保留窗口就是上限（运行期 256 KiB、结算后 16 KiB，`docs/subsystems/jobs.md:386`）：路径读到的字节数不超过环，不另设截断；再往下的行/字节窗口由 read 工具自己做（`plugins/host/omd-read/src/index.ts:395-403`）。
 - 会话详情：`ctx.terminals.read(agent, id)` 取最新一页；`read` 的 `offset/count` 分页仍归 `terminal_read`，地址不发明第二套坐标。
 - 错误（统一一句话，不暴露存在性）：
   - 未知 id 或他人 id：`cannot read "proc://x": no job or session "x" for this session (roster: proc://)`——刻意不区分 `unknown job` 与 `belongs to another session`，尽管注册表内部区分（`jobs-local:397-414`）。
@@ -56,15 +56,15 @@ dsh-resource://proc/<id>/output     单条详情去掉头部，只有作业输�
 | 停止 | `job_kill` / `terminal_close` / `terminal_signal` | — | 写动作只在这里 |
 
 ## 6. 安全边界
-- 围栏靠 `agent`：`InternalExec` 定型为 `{ signal, cwd?: string, agent?: Agent }`（一次改完，别分两次动同一个类型），由 `omd-read` 传 `exec.agent` 与它已经解析好的 `exec.cwd`（`plugins/omd-read/src/index.ts:221`）；`jobs` 用 `agent.id`，`terminals` 用对象本身。`cwd` 是给仓库/文件类源的，proc 不收相对地址，因此**不用** `cwd`。缺 `agent` 的调用（浏览器 `readRemote`）按注册表语义只看无主作业——浏览器本来也没有会话身份，界面侧作业观测的权威面是 `ui-jobs`。
+- 围栏靠 `agent`：`InternalExec` 定型为 `{ signal, cwd?: string, agent?: Agent }`（一次改完，别分两次动同一个类型），由 `omd-read` 传 `exec.agent` 与它已经解析好的 `exec.cwd`（`plugins/host/omd-read/src/index.ts:221`）；`jobs` 用 `agent.id`，`terminals` 用对象本身。`cwd` 是给仓库/文件类源的，proc 不收相对地址，因此**不用** `cwd`。缺 `agent` 的调用（浏览器 `readRemote`）按注册表语义只看无主作业——浏览器本来也没有会话身份，界面侧作业观测的权威面是 `ui-jobs`。
 - `agent` 的语义只是**作业与终端的归属**，不是历史读权限；跨会话读历史的开放决定与本源无关，别把两者混成一条围栏。
 - 不放大错误：不把"他人的 id"翻成"别人的作业"，也不在名册里列出别人的条目。
 - 不新增过滤：输出就是 producer 写进环的字节，与 `job_output` 同源；沙箱对环境的清洗在 spawn 前完成，这里不做二次审查。
 - 无秘密入口：`proc` 只读两个注册表已围栏的投影，不碰会话日志、不碰 fs。
 
 ## 7. 实施切片与验收
-1. 前置：`ReadMigration` 正在做 `plugins/omd-read/src/index.ts:289-299` 删 `readSchemes`、改 `inject: ['internalPaths']`、读地址走 `ctx.internalPaths.read(address, { signal, agent: exec.agent, cwd })`（`docs/omd-internal-paths.md:51-56` 第 2、3 步）；proc 不重复做，只等它落地。profile 那行已就位。
-2. `plugins/omd-internal-paths/src/service.ts:22-26`：`InternalExec` 加 `agent?: Agent` 与 `cwd?: string`（type-only import `@deepseek-ai/dsh-agent`），注释写清"agent = 归属围栏；cwd = 相对地址解析；两者都可缺"。`InternalSource` 的宿主侧 `locate?(path, exec): Promise<string | undefined>` 与这两字段同一次改完（artifact 要复用 read 的文件分支），**不进** `markRemoteMethods`（`service.ts:187-190`）；proc 不实现它，`locate` 缺省时 read 走文本分支，窗口行为不变。
+1. 前置：`ReadMigration` 正在做 `plugins/host/omd-read/src/index.ts:289-299` 删 `readSchemes`、改 `inject: ['internalPaths']`、读地址走 `ctx.internalPaths.read(address, { signal, agent: exec.agent, cwd })`（`docs/omd-internal-paths.md:51-56` 第 2、3 步）；proc 不重复做，只等它落地。profile 那行已就位。
+2. `plugins/host/omd-internal-paths/src/service.ts:22-26`：`InternalExec` 加 `agent?: Agent` 与 `cwd?: string`（type-only import `@deepseek-ai/dsh-agent`），注释写清"agent = 归属围栏；cwd = 相对地址解析；两者都可缺"。`InternalSource` 的宿主侧 `locate?(path, exec): Promise<string | undefined>` 与这两字段同一次改完（artifact 要复用 read 的文件分支），**不进** `markRemoteMethods`（`service.ts:187-190`）；proc 不实现它，`locate` 缺省时 read 走文本分支，窗口行为不变。
 3. 新建 `plugins/omd-proc/`：`package.json`（peer: `@deepseek-ai/dsh-jobs`、`@deepseek-ai/dsh-terminal`、`@deepseek-ai/dsh-agent`、`omd-internal-paths`）、`src/index.ts`（`inject: ['internalPaths']`，`ctx.get('jobs')` / `ctx.get('terminals')` 在**读取时**取，注册 `proc`）、`src/render.ts`（名册/头部/正文三个渲染器，口径抄 `tool-jobs/src/render.ts`）。`Config` 为空对象：可调项已经分别在 read 工具（`maxBytes`/`maxLines`）与 `jobs-local`（`retainBytes`/`settledRetainBytes`）上，proc 不再造第二份。
 4. `profiles/omd/cordis.patch.yml` 只追加 `omd-proc` 一行 insert（`omd-internal-paths` 已有，见 §1），`dsh plugin --profile omd add plugins/omd-proc` 建 link。每个源插件各带自己的行，别把行挂在别的源的切片里。
 5. 验收：

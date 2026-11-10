@@ -43,7 +43,7 @@ inputTriggers.registerSource({ trigger:'@', name:'issue', order:10, showGroupTit
 sidebarRight.openResource('dsh-resource://issue/acme/web/142')   // chip 点击 = 侧栏预览
 ```
 
-绑定来自 `remote.projectConfig.repoBinding(cwd, { fresh })`（peer 契约：`{kind:'bound', slug, host, owner, name, source}` / `{kind:'unbound', reason}`）。`cwd` 取「当前会话所属工作区」的 `path`（`workspaces.list.items[].sessionIds.includes(sessionId)` → `item.path`，与 `plugins/omd-project-config/src/client/index.js:220-234,490-491` 同一取法），取不到再退到 `sessions.list.byId[sessionId].cwd`；两者都没有 → 零行。`fresh: query === ''`：菜单打开时重读绑定，键入过程中吃缓存。
+绑定来自 `remote.projectConfig.repoBinding(cwd, { fresh })`（peer 契约：`{kind:'bound', slug, host, owner, name, source}` / `{kind:'unbound', reason}`）。`cwd` 取「当前会话所属工作区」的 `path`（`workspaces.list.items[].sessionIds.includes(sessionId)` → `item.path`，与 `plugins/workbench/omd-project-config/src/client/index.js:220-234,490-491` 同一取法），取不到再退到 `sessions.list.byId[sessionId].cwd`；两者都没有 → 零行。`fresh: query === ''`：菜单打开时重读绑定，键入过程中吃缓存。
 
 候选细节：`{ repo: slug, state:'all', query, limit: 20 }`；行文案 `name = "#142 flaky e2e"`（不带 `label`，否则 `MenuView` 会把 name 当别名再渲染一遍，`MenuView.tsx:186-189`）、`description = "open · test, ci · li · 3h"`、`section = t('section.issues') | t('section.pulls')`。用 `section` 而不是组标题：组标题的键就是源名，取 `ui-input-trigger` 自己的字典，未注册时原样显示 `issue`，要本地化就得往别人的命名空间注册同名字典（`locale.register(ns,…)` 是否合并取决于实现，不去赌）；`section` 是我们自己的字符串。query 命中 `/^#?(\d+)$/` 时宿主额外 `getIssue` 一次（窗口外/已关闭的老 issue 靠这条进入候选），并按 `isPull` 选 `issue`/`pr` 源。限流：宿主返回 `staleMs` 时该页是配额耗尽后的旧缓存，客户端在 `description` 末尾加 `·cached`；无缓存且请求失败 → RPC 抛错 → 该组零行。`truncated` 只体现在宿主返回值里，v1 不做「还有更多」提示行——菜单没有不可选行的座位，硬塞一个可选行会变成假候选。
 
@@ -58,7 +58,7 @@ chip 是 Lexical decorator 节点，只活在编辑器里；模型的形态只�
 | `insert.ref` | 整条 wire mention | `codec.serialize` 只收到 `ref`，标题必须可从中恢复 |
 | `clipboardText` | 同 `ref` | 草稿快照要求区间文本 == clipboardText（`draft-editor.ts:36-44`） |
 | `codec.serialize` / `clipboardText` | 恒等 | 与 `ui-reference` 的会话引用同构（`:171-174`） |
-| 侧栏/web 协议 | `dsh-resource://…` | 由 `omd-internal-paths` 桥按源名注册协议（`plugins/omd-internal-paths/src/client/index.js:99-115`） |
+| 侧栏/web 协议 | `dsh-resource://…` | 由 `omd-internal-paths` 桥按源名注册协议（`plugins/host/omd-internal-paths/src/client/index.js:99-115`） |
 
 标题进 wire 前清洗：去 `[` `]` 与换行、空白折叠、截 72 字符。复原：草稿快照自带 `{source, ref, label, clipboardText, offset, length}`（`Occurrence`，`draft-editor.ts:113-132`；`chip-node.tsx:72-83`），重载后直接重建 chip，**不需要**任何联网或查源。只有当插件被卸载时，`serializeReference` 才报 `no serializer for reference source "issue"` 并拒绝发送（`facade.ts:752`）——宁可拒绝也不发一条丢掉引用的消息。
 

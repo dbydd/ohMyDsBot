@@ -1,23 +1,29 @@
 // Link the host runtime packages a plugin needs at run time into
 // `plugins/node_modules` and `external-plugins/node_modules`, so a bare import
-// inside `plugins/<pkg>/src` or `external-plugins/<pkg>` resolves. In-tree
-// packages that a sibling imports by name are linked the same way, for the
-// same reason: a profile link resolves them from the importer's real path.
+// inside `plugins/<group>/<pkg>/src` or `external-plugins/<pkg>` resolves.
+// In-tree packages that a sibling imports by name are linked the same way, for
+// the same reason: a profile link resolves them from the importer's real path.
 //
-// The Onlyne packages (`omd-onlyne`, `omd-compute`, `omd-issue-runner`) live
-// in this tree under `plugins/`. They import each other, and the siblings
-// `omd-internal-paths` and `omd-sandbox-vm`, by package specifier, so those
-// names are linked here too. `@onlyne/lib` is the published npm package
-// `^3.2.0`: this script installs `plugins/npm-packages` and links that copy
-// into `plugins/node_modules`. `ONLYNE_ROOT`, when set, uses
+// Packages are grouped by role (`workbench`, `context`, `judgment`, `onlyne`,
+// `compute`, `host`). The link name is still the unscoped package name, not
+// the directory. Node walks from `plugins/<group>/<pkg>/src` through the group
+// directory and then `plugins/node_modules`, so one link root covers every group.
+//
+// The Onlyne packages are `plugins/onlyne/omd-onlyne`,
+// `plugins/compute/omd-compute`, and `plugins/compute/omd-issue-runner`. They
+// import each other, and the siblings `omd-internal-paths` and `omd-sandbox-vm`,
+// by package specifier, so those names are linked here too. `@onlyne/lib` is
+// the published npm package `^3.2.0`: this script installs `plugins/npm-packages`
+// and links that copy into `plugins/node_modules`. `ONLYNE_ROOT`, when set, uses
 // `<ONLYNE_ROOT>/packages/lib` instead.
 //
 // Why this exists
 // ---------------
 // `dsh plugin --profile <p> add <dir>` installs an out-of-tree package as a
 // `link:` dependency of the profile, so Node resolves the plugin's *own* bare
-// imports from its real path (`<repo>/plugins/<pkg>/src`), walking up through
-// `<repo>/plugins/<pkg>/node_modules`, `<repo>/plugins/node_modules`, … and
+// imports from its real path (`<repo>/plugins/<group>/<pkg>/src`), walking up
+// through `<repo>/plugins/<group>/<pkg>/node_modules`,
+// `<repo>/plugins/<group>/node_modules`, `<repo>/plugins/node_modules`, … and
 // never reaching `$DSH_HOME/profiles/node_modules`, which is the layer the
 // profile itself resolves against. Verified on dsh 0.1.5-rc.3: a plugin under
 // this repo importing `@deepseek-ai/cordis` fails with `ERR_MODULE_NOT_FOUND`
@@ -67,8 +73,8 @@ const PROFILE_PACKAGES = [
 
 /**
  * In-tree packages a sibling in this repository imports by name. They resolve
- * from the importer's real path (`<repo>/plugins/<pkg>/src`), which the profile
- * never sees, so `plugins/node_modules` has to hold them too.
+ * from the importer's real path (`<repo>/plugins/<group>/<pkg>/src`), which the
+ * profile never sees, so `plugins/node_modules` has to hold them too.
  */
 const SIBLING_PACKAGES = [
 	'omd-judge-context',
@@ -86,8 +92,25 @@ const repoRoot = dirname(pluginsRoot)
 /** Where `npm ci` installs `@onlyne/lib` so it does not own `plugins/node_modules`. */
 const npmPackagesRoot = join(pluginsRoot, 'npm-packages')
 
+/** Role directories under `plugins/`. A package lives at `plugins/<group>/<name>`. */
+const PLUGIN_GROUPS = ['workbench', 'context', 'judgment', 'onlyne', 'compute', 'host', 'archived']
+
 /** In-tree Onlyne packages that import each other by package specifier. */
 const ONLYNE_PACKAGES = ['omd-onlyne', 'omd-compute', 'omd-issue-runner']
+
+/**
+ * Directory of an in-tree package, looked up by its directory name.
+ * Grouped packages win; a package left directly under `plugins/` still resolves.
+ * @param {string} name directory name, such as `omd-onlyne`
+ * @returns {string}
+ */
+function pluginDir(name) {
+  for (const group of PLUGIN_GROUPS) {
+    const candidate = join(pluginsRoot, group, name)
+    if (existsSync(join(candidate, 'package.json'))) return candidate
+  }
+  return join(pluginsRoot, name)
+}
 
 /** npm range declared in `plugins/npm-packages/package.json`. */
 const ONLYNE_LIB_RANGE = '^3.2.0'
@@ -213,8 +236,8 @@ const trees = [
 		packages: [
 			...runtimeLinks(),
 			...PROFILE_PACKAGES.map(name => [name, join(profileModules, name)]),
-			...SIBLING_PACKAGES.map(name => [name, join(pluginsRoot, name)]),
-			...ONLYNE_PACKAGES.map(name => [name, join(pluginsRoot, name)]),
+			...SIBLING_PACKAGES.map(name => [name, pluginDir(name)]),
+			...ONLYNE_PACKAGES.map(name => [name, pluginDir(name)]),
 		],
 	},
 	...(existsSync(join(repoRoot, 'external-plugins'))

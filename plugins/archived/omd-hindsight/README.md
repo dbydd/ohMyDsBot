@@ -24,7 +24,7 @@ project and must not surface in unrelated work.
 ## Install
 
 ```bash
-dsh plugin --profile <profile> add /abs/path/to/plugins/omd-hindsight
+dsh plugin --profile <profile> add /abs/path/to/plugins/context/omd-hindsight
 ```
 
 The package carries its own bundle patch, so the entry inserts itself — no

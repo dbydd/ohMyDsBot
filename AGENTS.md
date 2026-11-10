@@ -13,13 +13,16 @@ Cordis registrations and overlays. Preserve both upstreams unchanged. A backend
 service such as userQuestions, approval, settings, or commands remains available
 when removing visible UI. UI removal targets browser rendering and shell code.
 
-Unused local plugins live in `plugins/archived/`; mounted packages and their
-transitive dependencies remain directly under `plugins/`. Keep old profile
-dependencies that reference archived locations separate from the new DS-Bot
-composition. The Lean experiment and its companion documents live in
-`archived/`. They are historical artifacts, not a development gate or a claim
-of TypeScript implementation correctness. Validate current changes through
-runtime composition and the behavior exercised by the change.
+Unused local plugins live in `plugins/archived/`. Active packages are grouped
+by role: `plugins/workbench`, `plugins/context`, `plugins/judgment`,
+`plugins/onlyne`, `plugins/compute`, and `plugins/host`. `plugins/node_modules`
+is still the shared resolution root — Node walks up from
+`plugins/<group>/<pkg>/src` to it — so sibling imports by package name keep
+working. Keep old profile dependencies that reference archived locations
+separate from the new DS-Bot composition. The Lean experiment and its companion
+documents live in `archived/`. They are historical artifacts, not a development
+gate or a claim of TypeScript implementation correctness. Validate current
+changes through runtime composition and the behavior exercised by the change.
 
 Two upstream packages carry their own runtime dependencies, and neither
 submodule ships them. Install each once after a fresh checkout:
@@ -33,10 +36,12 @@ node plugins/link-host-runtime.mjs
 The last line links the host packages a plugin imports by bare name (including
 `@deepseek-ai/dsh-scope`, which DS-Bot's host half imports) into the three
 module roots: `plugins/`, `external-plugins/`, and the repository root. The
-Onlyne plugins `omd-onlyne`, `omd-compute`, and `omd-issue-runner` live under
-`plugins/` and are linked there as siblings. `@onlyne/lib` is the published npm
-package `^3.2.0`; the script installs it from `plugins/npm-packages` into
-`plugins/node_modules`. Set `ONLYNE_ROOT` to a local Onlyne checkout to use
+Onlyne plugins live at `plugins/onlyne/omd-onlyne`,
+`plugins/compute/omd-compute`, and `plugins/compute/omd-issue-runner`. The
+script links those unscoped names, plus the siblings they import, into
+`plugins/node_modules`. `@onlyne/lib` is the published npm package `^3.2.0`;
+the script installs it from `plugins/npm-packages` into `plugins/node_modules`.
+Set `ONLYNE_ROOT` to a local Onlyne checkout to use
 `<ONLYNE_ROOT>/packages/lib` instead.
 
 ## Project Overview
@@ -151,9 +156,18 @@ oh-my-dsh/                       本项目根（AGENTS.md 在这里）
 │   ├── raw -> Alexandria/raw    知识库资源层（软链）
 │   │   └── <资源>/assets/       资源自带的非文本资料（见下）
 │   └── papers -> Alexandria/papers  知识库页面层（软链）
-├── plugins/                     树外插件源码
+├── plugins/                     树外插件，按角色分组
+│   ├── workbench/               窗口与面板
+│   ├── context/                 笔记、酒馆、记忆、技能
+│   ├── judgment/                判官、角色、回合规则
+│   ├── onlyne/                  Onlyne 总线
+│   ├── compute/                 沙箱、租约、issue runner、worktree
+│   ├── host/                    内部路径与其上的工具
+│   └── archived/                未挂载的旧包
 ├── external-plugins/            第三方 dsh 插件，逐个作为 git submodule 钉版本
-├── profiles/omd/                本机 profile 的定制副本（不带 Magpie 块）
+├── profiles/omd/                发布用 Web 组合（npm 依赖，不带 Magpie 块）
+├── profiles/omd-full/           开发用桌面组合（link: 指向本仓库插件）
+├── scripts/                     pack-desktop、publish-all、内部路径 CLI
 └── docs/                        设计说明
 ```
 
@@ -375,7 +389,7 @@ patch 层是字面 `[]\n`——**空的、只有注释的 `cordis.patch.yml` 会
 
 **当前挂载的定制**（2026-10-22 起逐项加）：`omd-judgment`（判官，原生 System One 优先、chat 兜底）、`omd-read`（`read` 与 `read_image` 合成一个工具：路径选择器、内联图片、`skill://` 等资源 scheme；profile 里把 `tool-fs` 的 `read` 与 `readImage` 关掉）、`omd-ttsr`（流式规则中止与重试）、`dsh-motion-ui`（第三方：交互组件、HTML/SVG 图解、动效与 MP4 导出）。
 
-`omd-onlyne`、`omd-compute`、`omd-issue-runner` 在 `plugins/` 下，`private: true`，不进 npm，也不进 `profiles/omd` 的依赖清单。要用时按各包 `cordis.patch.yml` 的行挂到自己的 profile。`@onlyne/lib` 用 npm 上的 `^3.2.0`，由 `link-host-runtime.mjs` 从 `plugins/npm-packages` 装进 `plugins/node_modules`；要改用本机检出就设 `ONLYNE_ROOT`。
+`omd-onlyne` 在 `plugins/onlyne/`，`omd-compute` 与 `omd-issue-runner` 在 `plugins/compute/`。三者 `private: true`，不进 npm，也不进 `profiles/omd` 的依赖清单。要用时按各包 `cordis.patch.yml` 的行挂到自己的 profile。`@onlyne/lib` 用 npm 上的 `^3.2.0`，由 `link-host-runtime.mjs` 从 `plugins/npm-packages` 装进 `plugins/node_modules`；要改用本机检出就设 `ONLYNE_ROOT`。
 
 **子代理后端只用 base 自带的 `spawn` 与 `fork`。** `@deepseek-ai/dsh-subagent-claude-code`、进程级 Codex 后端、ACP、dsh-sdk 一律不挂，也不写进任何 profile 或文档示例——模型调用的唯一出口是网关。子代理容量由 `subagent` entry 的 `Config` 决定：`maxActiveSubagents` 默认 8、`maxDepth` 默认 1，两个字段都是 volatile，patch 里可改、Plugins → Subagent 页面运行时可改；容量满时 dsh 直接拒绝（`ACTIVATION_LIMIT_REACHED`），不排队——要排队由我们自己的批处理工具负责。
 
@@ -459,7 +473,7 @@ patch 层是字面 `[]\n`——**空的、只有注释的 `cordis.patch.yml` 会
 
 本仓库是 **GPL-3.0-or-later**（`LICENSE` 是 FSF 原文；不要改它，也不要改成 `GPL-3.0-only`——留 `or later` 是刻意的）。新增文件默认继承该许可，不写逐文件头注释；需要声明的是例外，不是常例。
 
-- **每个 `plugins/*/package.json` 都带 `"license": "GPL-3.0-or-later"`。** 新插件照写。
+- **每个插件的 `package.json`（`plugins/<group>/<name>/package.json`）都带 `"license": "GPL-3.0-or-later"`。** 新插件照写，放进对应的角色目录。
 - **借用 MIT 项目的结构或常数仍要署名。** 目前有两处：`deepseek-harness`（运行时宿主）与 `oh-my-pi`（`omd-chart-plan` 的图表启发式来源）。来源路径、版权与"重写了什么、砍了什么"写在根级 `NOTICE.md`；再引第三方代码时同处追加，不另开文件。
 - **vendored 第三方保持自己的 LICENSE/NOTICE**（`external-plugins/dsh-motion-ui/vendor/…`），不要在 vendored 文件里换成 GPL 头。
 

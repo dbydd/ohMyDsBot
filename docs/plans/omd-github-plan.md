@@ -6,7 +6,7 @@
 
 ## 1. 地址语法
 
-三个源名，均 `shorthand: true`（`plugins/omd-internal-paths/src/service.ts:32-33`）。`path` 原样到达源，含 `?`（`plugins/omd-internal-paths/src/parse.ts:4-7,17-18`），查询串由源自己切。
+三个源名，均 `shorthand: true`（`plugins/host/omd-internal-paths/src/service.ts:32-33`）。`path` 原样到达源，含 `?`（`plugins/host/omd-internal-paths/src/parse.ts:4-7,17-18`），查询串由源自己切。
 
 ```
 issue://<n>                      issue://<owner>/<name>/<n>      issue://<owner>/<name>
@@ -49,7 +49,7 @@ listIssues(q: { repo: string; state?: 'open'|'closed'|'all'; labels?: string[]; 
 
 `state` 默认 `open`；**要看到关闭就必须 `state:'all'`**（关闭的条目在 `open` 列表里直接消失，无法与删除/转移区分）。`truncated` 为真表示 `per_page=100` 之外还有更多——调用方不得据此推断"条目消失"。`isPull` 由 `pull_request` 字段有无得出，`includePulls` 默认 false。`notModified` 表示这次条件请求吃了 304、`rows` 是缓存里同一份内容：调用方据此跳过 diff，但**拿不到也不需要 ETag**（ETag 归 client，不外泄，避免调用方自己发条件请求绕过单飞与水位）。
 
-`repo`/`n` 相对形式需要 cwd，而 `InternalExec` 只有 `signal`（`plugins/omd-internal-paths/src/service.ts:22-26`）。已与 ProcUriPlan 协同：`InternalExec` 统一扩成 `{ signal?: AbortSignal; agent?: Agent; cwd?: string }`（`omd-read:221` 已解析出 cwd，直接下传；proc 源用 agent，github 相对寻址用 cwd）。无 cwd（浏览器预览、定时任务）时相对地址直接报错，不给默认仓。
+`repo`/`n` 相对形式需要 cwd，而 `InternalExec` 只有 `signal`（`plugins/host/omd-internal-paths/src/service.ts:22-26`）。已与 ProcUriPlan 协同：`InternalExec` 统一扩成 `{ signal?: AbortSignal; agent?: Agent; cwd?: string }`（`omd-read:221` 已解析出 cwd，直接下传；proc 源用 agent，github 相对寻址用 cwd）。无 cwd（浏览器预览、定时任务）时相对地址直接报错，不给默认仓。
 
 ## 2. 后端：REST + 全局 fetch，不包 `gh`
 
@@ -95,7 +95,7 @@ GraphQL 明确否决：POST-only 无 ETag（本设计的一半收益来自 304 �
 1. `plugins/omd-github/{package.json,src/config.ts,src/errors.ts,src/client.ts}`：fetch 封装、`GithubError` 五种 kind、ETag/TTL/单飞/水位。
 2. `src/sources/{issue,pr,repo}.ts` + `src/render.ts` + `src/index.ts`：注册三个源，发布 `ctx.github`（`resolveRepo`/`listIssues`/`getIssue`/`listPulls`/`getPull`/`getFile`/`getTree`/`getCommit`/`getDiff`）并只把读方法挂 Remote。
 3. `src/tools.ts`：四个写工具。
-4. `plugins/omd-internal-paths/src/service.ts`：`InternalExec` 扩展（`agent?` + `cwd?`）；`plugins/omd-read/src/index.ts` 接入 `ctx.internalPaths` 并下传 agent 与 cwd；`profiles/omd/cordis.patch.yml` 补齐 `omd-internal-paths` 插件条目。
+4. `plugins/host/omd-internal-paths/src/service.ts`：`InternalExec` 扩展（`agent?` + `cwd?`）；`plugins/host/omd-read/src/index.ts` 接入 `ctx.internalPaths` 并下传 agent 与 cwd；`profiles/omd/cordis.patch.yml` 补齐 `omd-internal-paths` 插件条目。
 5. `docs/omd-project-config.md`：加入 `repo.slug`（归 RepoBindingPlan）；本插件不读 `.omd/config.json`。
 
 验收：`dsh --profile omd --dump-config` 退出码 0、stderr 空；在会话里对上面 7 个地址各 `read` 一次，与 `gh api` 同资源输出对比（标题/state/sha/文件行数一致）；对同一地址连读两次，第二次日志显示 304 且 `x-ratelimit-used` 不变；清空 `GITHUB_TOKEN` 后读 `issue://12` 必须报 `unconfigured` 而非空结果；把 `rateFloor` 调到 `999999`（第一次读之后水位必低于它），第二次读同一地址首行必须出现 `stale`——这条同时验证降级路径和标记不被吞。

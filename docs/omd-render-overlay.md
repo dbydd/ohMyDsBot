@@ -38,7 +38,7 @@ Bot 会话的工具面由 DS-Bot 裁剪：它用 `HIDDEN_TOOLS` 屏蔽 `subagent
 
 ## 文件
 
-- `plugins/omd-read/src/client/index.js`：新增 `omdReadCard` 投影与渲染器。
-- `plugins/omd-table-chart/src/client/index.js`、`plugins/omd-visual/src/client/index.js`：
+- `plugins/host/omd-read/src/client/index.js`：新增 `omdReadCard` 投影与渲染器。
+- `plugins/workbench/omd-table-chart/src/client/index.js`、`plugins/workbench/omd-visual/src/client/index.js`：
   原本就是"自有节点 + keyed 渲染"的写法，无需改动。
 - `archived/retired-profiles/omd-full/cordis.patch.yml`：组合层，冲突处让 DS-Bot 的行先。

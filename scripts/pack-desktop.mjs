@@ -117,17 +117,32 @@ function pluginRecord(dir) {
   return record
 }
 
+const PLUGIN_SKIP = new Set(['archived', 'node_modules', 'npm-packages'])
+
 /**
+ * Active plugins. A package is either `plugins/<group>/<name>` or, if someone
+ * has not moved it yet, `plugins/<name>`. Archived packages are not packed.
  * @param {string} repo
  * @returns {Array<{ name: string, dir: string, client?: string, patchName?: string }>}
  */
 export function localPlugins(repo = REPO) {
   const root = join(repo, 'plugins')
   const records = []
-  for (const entry of readdirSync(root, { withFileTypes: true })) {
-    if (!entry.isDirectory() || entry.name === 'archived' || entry.name === 'node_modules' || entry.name === 'npm-packages') continue
-    const record = pluginRecord(join(root, entry.name))
+  const consider = (dir) => {
+    const record = pluginRecord(dir)
     if (record) records.push(record)
+  }
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    if (!entry.isDirectory() || PLUGIN_SKIP.has(entry.name) || entry.name.startsWith('.')) continue
+    const dir = join(root, entry.name)
+    if (existsSync(join(dir, 'package.json'))) {
+      consider(dir)
+      continue
+    }
+    for (const child of readdirSync(dir, { withFileTypes: true })) {
+      if (!child.isDirectory() || child.name === 'node_modules' || child.name.startsWith('.')) continue
+      consider(join(dir, child.name))
+    }
   }
   return records
 }
@@ -220,7 +235,8 @@ export function profileProblems(repo = REPO) {
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
   const deps = manifest.dependencies ?? {}
   for (const plugin of byName.values()) {
-    if (!Object.values(deps).some(spec => typeof spec === 'string' && spec.endsWith(`/plugins/${basename(plugin.dir)}`))) continue
+    const pluginRel = relative(join(repo, 'plugins'), plugin.dir).replaceAll('\\', '/')
+    if (!Object.values(deps).some(spec => typeof spec === 'string' && spec.endsWith(`/plugins/${pluginRel}`))) continue
     if (deps[plugin.name] === undefined) {
       problems.push(`profiles/omd-full/package.json does not depend on ${plugin.name}`)
     }

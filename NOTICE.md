@@ -34,7 +34,7 @@ their notices are reproduced or pointed to as each one requires.
 - Source: <https://github.com/can1357/oh-my-pi>
 - License: MIT, Copyright (c) 2025 Mario Zechner, Copyright (c) 2025-2026
   Can Bölük, Copyright (c) 2026 Stencil Labs, Inc.
-- Relationship: design source for `plugins/omd-chart-plan/`. That plugin
+- Relationship: design source for `plugins/workbench/omd-chart-plan/`. That plugin
   re-implements the chart-planning heuristic of `packages/tui/src/charts/` and
   `packages/coding-agent/src/auto-graph/`: the decision cascade, the confidence
   gates, the question set and their thresholds come from there. No upstream
@@ -81,19 +81,19 @@ their notices are reproduced or pointed to as each one requires.
 
 - Source: <https://github.com/dbydd/omp-hindsight>, version `0.1.2`, commit `984e314`
 - License: MIT, Copyright (c) 2026 dbydd
-- Location: `plugins/omd-hindsight/src/core/`, `plugins/omd-hindsight/ssot/`, `plugins/omd-hindsight/packs/`
+- Location: `plugins/context/omd-hindsight/src/core/`, `plugins/context/omd-hindsight/ssot/`, `plugins/context/omd-hindsight/packs/`
 - Relationship: vendored reference core implementation and prompt pack.
   - Vendored:
     - `ssot/spec.ts`: single source of truth for operations, path routes, judge questions, and schemas.
     - `src/core/*`: HTTP client, configuration, planning, ranking, operations, resource paths, payloads, prompt packs, retry queue, rendering, and types.
     - `packs/default/*`: prompt pack markdown files for judge criteria, guidance, and decomposer.
   - Rewritten for dsh:
-    - `plugins/omd-hindsight/src/config.ts`: bridges dsh profile row into core HindsightConfig and validates through core parseConfig.
-    - `plugins/omd-hindsight/src/runtime.ts`: manages HindsightHttpClient, backend health probing, and offline retry queue.
-    - `plugins/omd-hindsight/src/ops.ts`: bridges execution to core executeAction and executeToolInput.
-    - `plugins/omd-hindsight/src/tool.ts`: adapts the four-parameter tool (intent, content, file, target) to dsh tools service, omd-judgment service, request-hash cache, and subagent readonly guard.
-    - `plugins/omd-hindsight/src/paths.ts`: exposes `hindsight://` internal paths via dsh internalPaths service using the core client and renderers.
-    - `plugins/omd-hindsight/src/index.ts`: wires Cordis lifecycle and service injections.
+    - `plugins/context/omd-hindsight/src/config.ts`: bridges dsh profile row into core HindsightConfig and validates through core parseConfig.
+    - `plugins/context/omd-hindsight/src/runtime.ts`: manages HindsightHttpClient, backend health probing, and offline retry queue.
+    - `plugins/context/omd-hindsight/src/ops.ts`: bridges execution to core executeAction and executeToolInput.
+    - `plugins/context/omd-hindsight/src/tool.ts`: adapts the four-parameter tool (intent, content, file, target) to dsh tools service, omd-judgment service, request-hash cache, and subagent readonly guard.
+    - `plugins/context/omd-hindsight/src/paths.ts`: exposes `hindsight://` internal paths via dsh internalPaths service using the core client and renderers.
+    - `plugins/context/omd-hindsight/src/index.ts`: wires Cordis lifecycle and service injections.
     - Automatic recall follows the reference query, ranking, deduplication, and fenced payload contract. The dsh adapter records injected context through its session lifecycle.
     - The web status strip, settings and queue panels, and recall evidence cards adapt the reference terminal UI to dsh browser extension points.
 
@@ -119,7 +119,7 @@ their notices are reproduced or pointed to as each one requires.
 
 ### marked (inlined in omd-context-tavern's client bundle)
 
-- Location: `plugins/omd-context-tavern/src/client/index.js`, the
+- Location: `plugins/context/omd-context-tavern/src/client/index.js`, the
   "Vendored libraries" block at the top of the module factory.
 - Source: <https://github.com/markedjs/marked>, version `15.0.12`, npm
   package `marked`, file `marked.min.js` (the minified UMD build).
@@ -155,7 +155,7 @@ their notices are reproduced or pointed to as each one requires.
 
 ### DOMPurify (inlined in omd-context-tavern's client bundle)
 
-- Location: `plugins/omd-context-tavern/src/client/index.js`, the same
+- Location: `plugins/context/omd-context-tavern/src/client/index.js`, the same
   "Vendored libraries" block, after the marked build.
 - Source: <https://github.com/cure53/DOMPurify>, version `3.4.17`, npm
   package `dompurify`, file `dist/purify.min.js`.

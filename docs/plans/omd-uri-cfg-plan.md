@@ -74,7 +74,7 @@ cfg://<ns>/@schema[/<pointer>]            字段表：type / default / volatile 
 1. `plugins/omd-cfg/src/projection.ts`（纯函数）：`plain()` 镜像 `.../settings/settings/src/schema.ts:10-17`（`isVolatile` 用 `@deepseek-ai/cosmokit`）、`leaves()`、`at()`（JSON Pointer）、`defaults()`、`schemaRows()`（字段表，secret 行的 default 换成 `set`）。验收：`node --experimental-strip-types --input-type=module -e "…"` 断言数组不展开、`~1` 反转义、secret 行不出现默认值。
 2. `plugins/omd-cfg/src/source.ts` + `src/index.ts`：`inject = ['settings', 'configEditor', 'internalPaths']`，`register('cfg', { grammar, shorthand: true, live: true, read })`，`ctx.effect` 归还 disposer。验收：`dsh --profile omd --dump-config` 退出码 0、stderr 无 `not found`；启动后读 `dsh-resource://cfg/omd-roles`，三行与 patch 一致。
 3. 运行时链接与挂载：`plugins/omd-cfg/package.json` 声明 `@deepseek-ai/dsh-settings`、`@deepseek-ai/dsh-config-editor`（type-only）、`@deepseek-ai/cordis-plugin-loader`、`@deepseek-ai/cosmokit`；`plugins/link-host-runtime.mjs:30-44` 的 `RUNTIME_PACKAGES` 补这三个；`profiles/omd/cordis.patch.yml:83-86` 已有 `omd-internal-paths` 行，别重复 insert，只在它后面加 `omd-cfg` 自己那一行（先后由 `inject` 保证，行序只为可读）。验收：`node plugins/link-host-runtime.mjs` 退出 0；`dsh --profile omd` 无 `did not activate`。
-4. 模型侧可达不在本切片：`omd-read` 还没改走 `ctx.internalPaths`（`plugins/omd-read/src/index.ts:289-299` 仍是自己的 `readSchemes`）。那次迁移是一整片，一次改完所有源，cfg 不为它改一行：`resolve()` 按注册表分发，注册即生效。迁移前只有 Web 侧 `dsh-resource://cfg/…` 能读；迁移后验收 `read {path:"cfg://omd-roles/@profile/roles/judge/model"}` 返回 `"group/decider"`。
+4. 模型侧可达不在本切片：`omd-read` 还没改走 `ctx.internalPaths`（`plugins/host/omd-read/src/index.ts:289-299` 仍是自己的 `readSchemes`）。那次迁移是一整片，一次改完所有源，cfg 不为它改一行：`resolve()` 按注册表分发，注册即生效。迁移前只有 Web 侧 `dsh-resource://cfg/…` 能读；迁移后验收 `read {path:"cfg://omd-roles/@profile/roles/judge/model"}` 返回 `"group/decider"`。
 
 ## 6. 风险
 

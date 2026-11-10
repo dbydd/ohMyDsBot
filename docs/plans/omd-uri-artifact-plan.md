@@ -11,14 +11,14 @@
 | `root` 默认是每进程随机 `$TMPDIR/dsh-spill-XXXXXX`；`cleanupPeriodDays` 默认 30，启动时一次性清扫 | `.../spill-local/src/store.ts:36-39`、`.../spill-local/src/index.ts:66-69,95-101` |
 | 清扫只进 `session-<12 hex>` 目录，删过期**普通文件**，不跟 symlink；根目录下的非 session 条目跳过 | `.../spill-local/src/cleanup.ts:225-261,302-306` |
 | 策略在结果超过 `maxInlineTokens`（base 配 12500）时保存全文，把 notice 接在预览后；`read` 结果不参与 | `.../spill-policy/src/index.ts:26-27,103-118,133-150`、`.../spill-policy/src/notice.ts:21-24` |
-| `omd-shake` 的省略标记会保留 notice 里的 locator + hint，因此 locator 必须自解释 | `plugins/omd-shake/src/shake.ts:88-107` |
-| 内部路径只有 `read`（无窗口），Remote 只导出 `sources`/`read`；`InternalExec` 今天只有 `signal`，共享契约加 `agent?: Agent` 与 Main 的 `cwd?`（artifact 不消费） | `plugins/omd-internal-paths/src/service.ts:22-45,142-146,187-190` |
-| `read` 的 scheme 分支目前把整串交给 handler，再 `buildWindow`；`selector.raw` 只解析未用于 render | `plugins/omd-read/src/index.ts:376,386-410`、`plugins/omd-read/src/selector.ts:22-26` |
+| `omd-shake` 的省略标记会保留 notice 里的 locator + hint，因此 locator 必须自解释 | `plugins/archived/omd-shake/src/shake.ts:88-107` |
+| 内部路径只有 `read`（无窗口），Remote 只导出 `sources`/`read`；`InternalExec` 今天只有 `signal`，共享契约加 `agent?: Agent` 与 Main 的 `cwd?`（artifact 不消费） | `plugins/host/omd-internal-paths/src/service.ts:22-45,142-146,187-190` |
+| `read` 的 scheme 分支目前把整串交给 handler，再 `buildWindow`；`selector.raw` 只解析未用于 render | `plugins/host/omd-read/src/index.ts:376,386-410`、`plugins/host/omd-read/src/selector.ts:22-26` |
 | `ctx.fs.readByteRange(target,{offset,length})` 已存在，按窗口取字节且不缓冲整文件 | `refs/deepseek-harness/packages/fs/fs/src/index.ts:230-243` |
 
 ## 2. 地址语法
 
-行语法直接复用 `parseSelectorSuffix`（`plugins/omd-read/src/selector.ts:28-78`）；`b` 开头是本设计新增的字节语法。`<id>` = `sha256(content)` 前 16 位小写 hex；行段与字节段不得混用，`:raw` 只对行段有效，抑制 `N|`。
+行语法直接复用 `parseSelectorSuffix`（`plugins/host/omd-read/src/selector.ts:28-78`）；`b` 开头是本设计新增的字节语法。`<id>` = `sha256(content)` 前 16 位小写 hex；行段与字节段不得混用，`:raw` 只对行段有效，抑制 `N|`。
 
 ```text
 artifact://3f2a9c1d4e5f6071                 # 头一页
@@ -64,8 +64,8 @@ dsh-resource://artifact/3f2a9c1d4e5f6071     # 规范形式，界面侧
 
 1. `plugins/omd-artifact/src/store.ts`：继承 `LocalSpillStore`，`Config = { root: required, cleanupPeriodDays=30, previewBytes=65536 }`；实现 id、rename、ledger、根目录校验。`package.json` peer 依赖 `@deepseek-ai/dsh-spill-local`、`@deepseek-ai/dsh-spill`、`omd-internal-paths`。
 2. `plugins/omd-artifact/src/source.ts` + `index.ts`：注册 `artifact`（`shorthand: true`），实现宿主侧 `locate(id)` 与界面侧 `read(path)`（head/字节页），`static inject = ['internalPaths', 'fs']`。
-3. 契约交接，不单独落 `plugins/omd-internal-paths/src/service.ts`：它的唯一编辑归共享迁移 owner，把 `InternalSource.locate?(path, exec): Promise<string | undefined>` 与 Main 的 `agent?`/`cwd?` 合并进同一次编辑。`locate` 返回宿主绝对路径，仅宿主侧，绝不进 `markRemoteMethods`（`service.ts:187-190`）；`undefined` 表示非文件源，缺失/过期由源抛错。新增 `src/range.ts` 放行/字节选择器纯函数（从 `omd-read/src/selector.ts` 迁出，行为不变），`omd-read` 改从此处 import。
-4. 共享迁移之上改 `plugins/omd-read/src/index.ts`：先解析地址＋选择器，再 `internalPaths.resolve`；后缀解析失败时按整段地址处理、由源报错（沿用 literal-path-wins）。有 `locate` 走文件分支（`displayPath` 用地址），无 `locate` 保留现有文本＋`buildWindow`。新增字节页返回 `{rawText, bytes}`、`render` 走无行号 envelope、`presentationMeta` 返回 undefined；顺手让 `selector.raw` 生效。`package.json` 增加 `omd-internal-paths` 依赖。
+3. 契约交接，不单独落 `plugins/host/omd-internal-paths/src/service.ts`：它的唯一编辑归共享迁移 owner，把 `InternalSource.locate?(path, exec): Promise<string | undefined>` 与 Main 的 `agent?`/`cwd?` 合并进同一次编辑。`locate` 返回宿主绝对路径，仅宿主侧，绝不进 `markRemoteMethods`（`service.ts:187-190`）；`undefined` 表示非文件源，缺失/过期由源抛错。新增 `src/range.ts` 放行/字节选择器纯函数（从 `omd-read/src/selector.ts` 迁出，行为不变），`omd-read` 改从此处 import。
+4. 共享迁移之上改 `plugins/host/omd-read/src/index.ts`：先解析地址＋选择器，再 `internalPaths.resolve`；后缀解析失败时按整段地址处理、由源报错（沿用 literal-path-wins）。有 `locate` 走文件分支（`displayPath` 用地址），无 `locate` 保留现有文本＋`buildWindow`。新增字节页返回 `{rawText, bytes}`、`render` 走无行号 envelope、`presentationMeta` 返回 undefined；顺手让 `selector.raw` 生效。`package.json` 增加 `omd-internal-paths` 依赖。
 5. 共享前置（谁先落地谁做）：`omd-internal-paths` 挂 profile 行 + `omd-read` 迁到 `ctx.internalPaths`（`docs/omd-internal-paths.md §5` 第 2、3 步，不保留 `readSchemes`）。本切片在其后只加 `omd-artifact` 行并禁用 `spill-local`，`config.root: !!js dshHomePath('spill')`；更新 `docs/omd-internal-paths.md` 与 `plugins/README.md`。
 
 ```sh

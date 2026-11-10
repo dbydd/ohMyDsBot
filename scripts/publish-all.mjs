@@ -7,8 +7,8 @@
 // stdio is inherited so npm can open the browser itself: approve the first
 // ceremony and check npmjs.com's "don't ask again for 5 minutes" box — the
 // rest of the batch then passes without further prompts. `npm login` first.
-import { readFileSync, readdirSync } from 'node:fs'
-import { join } from 'node:path'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { basename, join } from 'node:path'
 import { spawnSync } from 'node:child_process'
 
 const argv = process.argv.slice(2)
@@ -22,11 +22,28 @@ const tag = flag('--tag')
 const only = argv.includes('--only') ? argv.slice(argv.indexOf('--only') + 1).filter(a => !a.startsWith('--')) : null
 
 const pluginsDir = new URL('../plugins/', import.meta.url).pathname
-const packages = readdirSync(pluginsDir, { withFileTypes: true })
-  .filter(e => e.isDirectory() && e.name.startsWith('omd-'))
-  .map(e => e.name)
-  .sort()
-  .filter(name => only === null || only.includes(name))
+const skip = new Set(['archived', 'node_modules', 'npm-packages'])
+
+/** @returns {string[]} absolute package directories, grouped or still flat */
+function packageDirs() {
+  const found = []
+  for (const entry of readdirSync(pluginsDir, { withFileTypes: true })) {
+    if (!entry.isDirectory() || skip.has(entry.name) || entry.name.startsWith('.')) continue
+    const dir = join(pluginsDir, entry.name)
+    if (existsSync(join(dir, 'package.json'))) {
+      if (entry.name.startsWith('omd-')) found.push(dir)
+      continue
+    }
+    for (const child of readdirSync(dir, { withFileTypes: true })) {
+      if (!child.isDirectory() || !child.name.startsWith('omd-')) continue
+      const childDir = join(dir, child.name)
+      if (existsSync(join(childDir, 'package.json'))) found.push(childDir)
+    }
+  }
+  return found.sort()
+}
+
+const packages = packageDirs().filter(dir => only === null || only.includes(basename(dir)))
 
 if (packages.length === 0) {
   console.error('no packages matched')
@@ -44,9 +61,10 @@ if (!dryRun) {
 
 const results = []
 for (const dir of packages) {
-  const pkg = JSON.parse(readFileSync(join(pluginsDir, dir, 'package.json'), 'utf8'))
-  if (pkg.name !== `@dbydd/${dir}` || pkg.private === true) {
-    results.push({ dir, status: 'skip', detail: 'name mismatch or private' })
+  const name = basename(dir)
+  const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'))
+  if (pkg.name !== `@dbydd/${name}` || pkg.private === true) {
+    results.push({ dir: name, status: 'skip', detail: 'name mismatch or private' })
     continue
   }
   const args = ['publish', '--access', 'public']
@@ -54,15 +72,15 @@ for (const dir of packages) {
   if (tag !== undefined) args.push('--tag', tag)
   if (otp !== undefined) args.push('--otp', otp)
   const run = spawnSync('npm', args, {
-    cwd: join(pluginsDir, dir),
+    cwd: dir,
     stdio: dryRun ? ['ignore', 'ignore', 'pipe'] : 'inherit',
     encoding: 'utf8',
   })
   if (run.status === 0) {
-    results.push({ dir, status: 'published', detail: `${pkg.name}@${pkg.version}` })
+    results.push({ dir: name, status: 'published', detail: `${pkg.name}@${pkg.version}` })
   } else {
-    const detail = dryRun ? (run.stderr || '').trim().split('\n').slice(-2).join(' | ') : 'see npm output above — rerun with --only ' + dir
-    results.push({ dir, status: 'failed', detail })
+    const detail = dryRun ? (run.stderr || '').trim().split('\n').slice(-2).join(' | ') : 'see npm output above — rerun with --only ' + name
+    results.push({ dir: name, status: 'failed', detail })
   }
 }
 
