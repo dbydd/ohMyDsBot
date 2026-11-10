@@ -22,6 +22,20 @@ test('an acquire is a standard compute message, not a local orbctl call', () => 
   assert.equal(lease.ttl_ms, 1_800_000)
 })
 
+test('renew carries the extension length as top-level ttl_ms', () => {
+  const message = computeRequest('urn:onlyne:agent:compute', {
+    operation: 'renew',
+    name: 'omd-compute-worker',
+    lease_id: 'cls_01',
+    ttl_ms: 1_800_000,
+  }, 'renew workspace machine')
+  assert.equal(message.delivery_kind, COMPUTE_REQUEST_KIND)
+  assert.equal(message.meta?.operation, 'renew')
+  assert.equal(message.meta?.lease_id, 'cls_01')
+  assert.equal(message.meta?.ttl_ms, 1_800_000)
+  assert.equal(message.meta?.lease, undefined)
+})
+
 test('a providing node reply is compute-result JSON, and the older meta.data envelope still parses', () => {
   const body = computeResultBody({
     lease_id: 'lease-omd-compute-worker',

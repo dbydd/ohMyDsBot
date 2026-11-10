@@ -69,6 +69,7 @@ function wireOf(meta: { readonly [key: string]: Json }): ComputeWireRequest {
     operation,
     ...typeof meta.name === 'string' ? { name: meta.name } : {},
     ...typeof meta.lease_id === 'string' ? { lease_id: meta.lease_id } : {},
+    ...typeof meta.ttl_ms === 'number' ? { ttl_ms: meta.ttl_ms } : {},
     ...typeof meta.workspacePath === 'string' ? { workspacePath: meta.workspacePath } : {},
     ...container === undefined ? {} : { container: container as ComputeWireRequest['container'] },
     ...lease === undefined ? {} : { lease: lease as ComputeWireRequest['lease'] },

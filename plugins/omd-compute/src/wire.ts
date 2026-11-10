@@ -36,6 +36,12 @@ export interface ComputeWireRequest {
   readonly operation: ComputeWireOperation
   readonly name?: string
   readonly lease_id?: string
+  /**
+   * How long this renew extends the lease, in milliseconds.
+   * `@onlyne/compute-gateway` reads this on `meta` itself for `renew`;
+   * an acquire still nests the same number under `lease.ttl_ms`.
+   */
+  readonly ttl_ms?: number
   readonly workspacePath?: string
   readonly container?: { readonly image?: string; readonly mounts?: ReadonlyArray<{ readonly host_path?: string; readonly container_path?: string }> }
   readonly lease?: { readonly ttl_ms?: number; readonly max_ttl_ms?: number; readonly idle_timeout_ms?: number }
@@ -57,6 +63,7 @@ export function computeRequest(to: string, request: ComputeWireRequest, text: st
   }
   if (request.name !== undefined) meta.name = request.name
   if (request.lease_id !== undefined) meta.lease_id = request.lease_id
+  if (request.ttl_ms !== undefined) meta.ttl_ms = request.ttl_ms
   if (request.workspacePath !== undefined) meta.workspacePath = request.workspacePath
   if (request.container !== undefined) meta.container = request.container as Json
   if (request.lease !== undefined) meta.lease = request.lease as Json

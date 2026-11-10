@@ -218,7 +218,8 @@ it and never becomes a job. An older `compute` reply whose descriptor sits in
 `meta.data` still settles.
 
 The lease is kept alive: while a job holds one, a heartbeat sends `renew` with
-the `lease_id` and `ttl_ms` every half of the shorter window — `ttl / 2`, or half
+`lease_id` and a top-level `meta.ttl_ms` (the extension length; the gateway
+reads it there, not under `lease`) every half of the shorter window — `ttl / 2`, or half
 the receipt's `idle_timeout_ms` when that is smaller (the window is
 `computeTtlMs`, 6 h by default). It stops in `dispose` and on every path that
 reclaims the job, so a close never renews what it destroyed. One renewal is in
