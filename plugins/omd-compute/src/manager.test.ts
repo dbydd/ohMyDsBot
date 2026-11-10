@@ -309,7 +309,7 @@ describe('OECP v1 envelope', () => {
     }), compute, settings)
 
     expect(sent).toHaveLength(1)
-    expect(sent[0]?.delivery_kind).toBe('compute')
+    expect(sent[0]?.delivery_kind).toBe('compute-result')
     // No double nesting: the receipt must arrive as message.meta.data.<field>,
     // not message.meta.data.data.<field>.
     expect(sent[0]?.meta?.data).toBeUndefined()
@@ -351,7 +351,7 @@ describe('OECP v1 envelope', () => {
     }), compute, settings)
 
     const data = dataOf(sent)
-    expect(sent[0]?.delivery_kind).toBe('compute')
+    expect(sent[0]?.delivery_kind).toBe('compute-result')
     expect(data.lease_id).toBe(`lease-${MACHINE}`)
     expect(data.purpose).toBe('legacy')
     expect((data.expires_at as number) - (data.created_at as number)).toBe(900_000)
@@ -420,7 +420,7 @@ describe('lease ownership', () => {
     await handleBrokerInbox(renewed.node, entryOf({
       operation: 'renew', lease_id: leaseId, ttl_ms: 120_000,
     }), compute, settings)
-    expect(renewed.sent[0]?.delivery_kind).toBe('compute')
+    expect(renewed.sent[0]?.delivery_kind).toBe('compute-result')
     expect(dataOf(renewed.sent).expires_at as number).toBeGreaterThanOrEqual(firstExpiry)
     expect(calls.filter(call => call.startsWith('provision') || call.startsWith('start'))).toEqual([`provision ${MACHINE}`])
 
@@ -428,14 +428,14 @@ describe('lease ownership', () => {
     await handleBrokerInbox(released.node, entryOf({
       operation: 'release', lease_id: leaseId,
     }), compute, settings)
-    expect(released.sent[0]?.delivery_kind).toBe('compute')
+    expect(released.sent[0]?.delivery_kind).toBe('compute-result')
     expect(dataOf(released.sent).state).toBe('stopped')
 
     const destroyed = fakeNode()
     await handleBrokerInbox(destroyed.node, entryOf({
       operation: 'destroy', lease_id: leaseId,
     }), compute, settings)
-    expect(destroyed.sent[0]?.delivery_kind).toBe('compute')
+    expect(destroyed.sent[0]?.delivery_kind).toBe('compute-result')
     expect(dataOf(destroyed.sent).destroyed).toBe(true)
     expect(compute.get(MACHINE)).toBeUndefined()
   })
@@ -668,12 +668,12 @@ describe('compute:// path', () => {
 
     const top = fakeNode()
     await handleBrokerInbox(top.node, entryOf({ operation: 'status', lease_id: leaseId }), compute, settings)
-    expect(top.sent[0]?.delivery_kind).toBe('compute')
+    expect(top.sent[0]?.delivery_kind).toBe('compute-result')
     expect((dataOf(top.sent).leases as Json[])[0]).toMatchObject({ lease_id: leaseId, owner: PEER_A })
 
     const legacy = fakeNode()
     await handleBrokerInbox(legacy.node, entryOf({ data: { operation: 'status' } }), compute, settings)
-    expect(legacy.sent[0]?.delivery_kind).toBe('compute')
+    expect(legacy.sent[0]?.delivery_kind).toBe('compute-result')
     expect(dataOf(legacy.sent).leases).toHaveLength(1)
   })
 })

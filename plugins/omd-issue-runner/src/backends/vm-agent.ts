@@ -113,67 +113,61 @@ export function createVmAgentBackend(options: VmAgentBackendOptions): CodingAgen
           + '(mount omd-worktree-alloc)',
         )
       }
-      const vm = options.vm()
-      if (vm === undefined) {
-        throw new Error(
-          'omd-issue-runner: the sandboxVm service is not mounted, so no machine could be started '
-          + '(mount omd-sandbox-vm, or set backend to "dsh-agent")',
-        )
-      }
       const allocation = await allocator.allocate(job.branch, job.source)
       const machine = options.machineName(job)
       try {
         const control = options.compute()
-        if (control !== undefined) {
-          const lease = await control.acquire({
-            name: machine,
-            workspacePath: allocation.path,
-            image: options.image,
-            ttlMs: options.leaseTtlMs,
-            purpose: `issue-${job.id}`,
-            ...job.work === undefined ? {} : { work: job.work },
-          })
-          if (lease.kind === 'granted') {
-            // OECP v1 hands the ticketed interactive entry in
-            // `connection.portal_urls.desktop`; a manager that names none leaves
-            // the desktop to the provider that mints one.
-            const portal = lease.descriptor.connection?.portalUrls?.desktop
-            const desktopUrl = portal
-              ?? lease.descriptor.desktopUrl
-              ?? (await vm.inspect(machine).catch(() => undefined))?.desktopUrl
-            states.set(job.id, {
-              allocator,
-              allocation,
-              machine,
-              lease: 'compute',
-              ...lease.descriptor.leaseId === undefined ? {} : { leaseId: lease.descriptor.leaseId },
-              heartbeat: startLeaseHeartbeat({
-                name: machine,
-                ttlMs: options.leaseTtlMs,
-                ...lease.descriptor.idleTimeoutMs === undefined
-                  ? {}
-                  : { idleTimeoutMs: lease.descriptor.idleTimeoutMs },
-                ...lease.descriptor.leaseId === undefined ? {} : { leaseId: lease.descriptor.leaseId },
-                log: options.log,
-                renew: () => renewLease(machine, allocation.path, lease.descriptor.leaseId, job),
-              }),
-            })
-            return {
-              worktreePath: allocation.path,
-              branch: allocation.name,
-              machine,
-              ...lease.descriptor.leaseId === undefined ? {} : { leaseId: lease.descriptor.leaseId },
-              ...desktopUrl === undefined ? {} : { desktopUrl },
-            }
-          }
+        if (control === undefined) {
+          throw new Error(
+            'omd-issue-runner: VM leases are Onlyne compute messages. No compute control plane is mounted, '
+            + 'so this process will not call orbctl. Mount omd-compute on a node that has the driver, '
+            + 'or set backend to "dsh-agent".',
+          )
         }
-        const sandbox = await vm.provision({ name: machine, workspacePath: allocation.path })
-        states.set(job.id, { allocator, allocation, machine, lease: 'direct' })
+        const lease = await control.acquire({
+          name: machine,
+          workspacePath: allocation.path,
+          image: options.image,
+          ttlMs: options.leaseTtlMs,
+          purpose: `issue-${job.id}`,
+          ...job.work === undefined ? {} : { work: job.work },
+        })
+        if (lease.kind !== 'granted') {
+          throw new Error(
+            `omd-issue-runner: ${options.machineName(job)} was not leased. The providing node did not answer; `
+            + 'a missing driver is not a reason to provision on this host.',
+          )
+        }
+        // The desktop in the receipt is the providing node's. A local inspect is
+        // only a hint when this same host is the driver and the receipt named none.
+        const vm = options.vm()
+        const portal = lease.descriptor.connection?.portalUrls?.desktop
+        const desktopUrl = portal
+          ?? lease.descriptor.desktopUrl
+          ?? (vm === undefined ? undefined : (await vm.inspect(machine).catch(() => undefined))?.desktopUrl)
+        states.set(job.id, {
+          allocator,
+          allocation,
+          machine,
+          lease: 'compute',
+          ...lease.descriptor.leaseId === undefined ? {} : { leaseId: lease.descriptor.leaseId },
+          heartbeat: startLeaseHeartbeat({
+            name: machine,
+            ttlMs: options.leaseTtlMs,
+            ...lease.descriptor.idleTimeoutMs === undefined
+              ? {}
+              : { idleTimeoutMs: lease.descriptor.idleTimeoutMs },
+            ...lease.descriptor.leaseId === undefined ? {} : { leaseId: lease.descriptor.leaseId },
+            log: options.log,
+            renew: () => renewLease(machine, allocation.path, lease.descriptor.leaseId, job),
+          }),
+        })
         return {
           worktreePath: allocation.path,
           branch: allocation.name,
           machine,
-          ...sandbox.desktopUrl === undefined ? {} : { desktopUrl: sandbox.desktopUrl },
+          ...lease.descriptor.leaseId === undefined ? {} : { leaseId: lease.descriptor.leaseId },
+          ...desktopUrl === undefined ? {} : { desktopUrl },
         }
       } catch (error) {
         // A machine that never came up leaves no workspace behind either: the

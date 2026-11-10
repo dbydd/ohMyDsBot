@@ -37,12 +37,20 @@ ceiling bounds the whole claim from `createdAt`, not one window.
 The control plane is Onlyne; the data plane is not.
 
 - **Over Onlyne** (`delivery_kind: "compute"` to `urn:onlyne:agent:compute`):
-  `acquire`, `renew`, `release`, `destroy`, `status`, plus the `expired` notice
-  the sweep pushes. Each answers with a descriptor: `lease_id`, `name`, `owner`,
-  `state`, `workspacePath`, timestamps and ttl in both `camelCase` and
-  `snake_case`, `connection` (`exec_transport`, `endpoints`,
+  `acquire`, `renew`, `release`, `destroy`, `status`. The providing node answers
+  `delivery_kind: "compute-result"` whose `msg` is the JSON descriptor — the
+  same reply `@onlyne/compute-gateway` posts. The descriptor also lands in
+  `meta.data` for callers that still read the older omd envelope. Fields:
+  `lease_id`, `name`, `owner`, `state`, `workspacePath`, timestamps and ttl in
+  both `camelCase` and `snake_case`, `connection` (`endpoints`,
   `portal_urls.desktop`), `resolved_env` and `allocated`. No credential appears
-  in it: the desktop portal is the machine's address, not a ticket.
+  in it: the desktop portal is the machine's address, not a ticket. The sweep's
+  `expired` notice is a `compute-result` with `operation: "expired"`.
+- **The driver is not the bus.** After the message is admitted, this node calls
+  a `SandboxDriver` from `@onlyne/compute-core`. The only driver in this repo is
+  `orbstack`, a thin adapter over `omd-sandbox-vm` (`orbctl`, Mac-only). A Linux
+  host with no driver answers `unavailable` and does not invent a hypervisor.
+  Docker or QEMU would be another driver behind the same message.
 - **Not over Onlyne**: running commands (`omd-sandbox-vm`'s `exec`) and watching
   or taking over a desktop (the human's ticketed noVNC route). Container traffic
   never enters the message bus.
@@ -122,8 +130,9 @@ interval.
 ## Checks
 
 ```sh
-bun test src/manager.test.ts   # 24 cases: the manager's lifecycle plus OECP v1 envelope, receipts, ownership, capacity, expiry notices and compute:// identity
-tsc --noEmit -p tsconfig.json  # src only; tests carry bun:test with no types here
+node --test src/bus.test.ts    # the standard message and the orbstack driver seam
+bun test src/manager.test.ts   # the manager's lifecycle plus OECP v1 envelope, receipts, ownership, capacity, expiry notices and compute:// identity
+tsc --noEmit -p tsconfig.json  # src only; bun tests have no types here
 ```
 
 Verified against OrbStack on this host: a lease provisioned `omd-compute-demo`,

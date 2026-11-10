@@ -21,6 +21,7 @@
     "@deepseek-ai/dsh-session": "*",
     "@deepseek-ai/schemastery": "*",
     "@onlyne/lib": "^3.2.0",
+    "omd-compute": "*",
     "omd-onlyne": "*",
     "omd-sandbox-vm": "*"
   },
@@ -31,6 +32,7 @@
     "@deepseek-ai/dsh-session": "*",
     "@deepseek-ai/schemastery": "*",
     "@onlyne/lib": "^3.2.0",
+    "omd-compute": "*",
     "@types/node": "^22.10.0"
   }
 }
