@@ -16,7 +16,7 @@
 // No state, no session write, no model call: rendering is a pure projection of
 // the record.
 window.__ModuleLoader__.load({
-  id: 'omd-table-chart',
+  id: '@dbydd/omd-table-chart',
   factory: (require) => {
     var module = { exports: {} }
     var exports = module.exports

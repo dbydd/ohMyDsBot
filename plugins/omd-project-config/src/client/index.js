@@ -4,7 +4,7 @@
 // directly. Only platform modules (react and the shared primitives) are
 // requested from the module table.
 window.__ModuleLoader__.load({
-  id: 'omd-project-config',
+  id: '@dbydd/omd-project-config',
   factory: (require) => {
     var module = { exports: {} }
     var exports = module.exports

@@ -22,7 +22,7 @@
 // Nothing here decides anything: the host already wrote the record, and these
 // definitions only project it. No model call, no session write, no state.
 window.__ModuleLoader__.load({
-  id: 'omd-visual',
+  id: '@dbydd/omd-visual',
   factory: (require) => {
     var module = { exports: {} }
     var exports = module.exports

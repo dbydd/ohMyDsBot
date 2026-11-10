@@ -13,7 +13,7 @@
 // `_card` / `_row` / `_header` outside a column scope — those locals repeat in
 // every package and would collide.
 window.__ModuleLoader__.load({
-  id: 'omd-skin',
+  id: '@dbydd/omd-skin',
   factory: (require) => {
     var module = { exports: {} }
     var exports = module.exports

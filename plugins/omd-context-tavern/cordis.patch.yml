@@ -2,4 +2,4 @@
 # DS-Bot details tab and an Agent-mode sidebar overlay.
 - insert:
     - id: omd-context-tavern
-      name: omd-context-tavern
+      name: "@dbydd/omd-context-tavern"

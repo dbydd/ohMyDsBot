@@ -3,4 +3,4 @@
 # manual profile row is needed.
 - insert:
     - id: omd-internal-paths
-      name: omd-internal-paths
+      name: "@dbydd/omd-internal-paths"

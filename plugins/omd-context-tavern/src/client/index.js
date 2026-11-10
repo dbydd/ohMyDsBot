@@ -31,7 +31,7 @@
 // the deployment root where no session backs the page.
 
 window.__ModuleLoader__.load({
-  id: 'omd-context-tavern',
+  id: '@dbydd/omd-context-tavern',
   factory: (require) => {
     var module = { exports: {} }
     var exports = module.exports

@@ -15,7 +15,7 @@
 //    and its evidence links open read-only internal resources through
 //    `/api/paths`.
 window.__ModuleLoader__.load({
-  id: 'omd-hindsight',
+  id: '@dbydd/omd-hindsight',
   factory: (require) => {
     var module = { exports: {} }
     var exports = module.exports
