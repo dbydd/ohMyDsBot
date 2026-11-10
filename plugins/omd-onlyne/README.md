@@ -202,11 +202,9 @@ address no source owns).
 
 ## Loading `@onlyne/lib`
 
-`@onlyne/lib` 3.1.0 publishes compiled ESM: `main` and `exports["."]` both point
-at `./dist/index.js`. **The host loads it as-is**; no loader hook, no
-transpilation and no rewritten copy is involved. Measured on this machine with
-Node v26.12.0, `node -e "import('@onlyne/lib')"` yields twenty-one exports and
-`createHttpHandler` is a function.
+`@onlyne/lib` `^3.2.0` is the published package. `3.2.0`'s `main` and
+`exports["."]` both point at `./dist/index.js`. **The host loads that file
+as-is**; no loader hook, no transpilation and no rewritten copy is involved.
 
 A plugin installed by `link:` resolves its own bare imports from its real path,
 which never reaches `$DSH_HOME/profiles/node_modules`. `plugins/node_modules`
@@ -216,11 +214,12 @@ holds those links, and this repository fills it:
 node plugins/link-host-runtime.mjs
 ```
 
-The script links the DSH host runtime, the in-tree siblings these packages
+The script links the DSH host runtime and the in-tree siblings these packages
 import by name (`omd-internal-paths`, `omd-sandbox-vm`, `omd-onlyne`,
-`omd-compute`, `omd-issue-runner`), and `@onlyne/lib` from
-`$ONLYNE_ROOT/packages/lib` when an Onlyne checkout is present (`ONLYNE_ROOT`
-defaults to `~/Documents/progs/onlyne`). Then install and mount the plugin:
+`omd-compute`, `omd-issue-runner`), and installs `@onlyne/lib@^3.2.0` from npm
+(`plugins/npm-packages`) into that directory. Set `ONLYNE_ROOT` to a local
+Onlyne checkout to use `<ONLYNE_ROOT>/packages/lib` instead of the npm package.
+Then install and mount the plugin:
 
 ```sh
 dsh plugin --profile <profile> add ./plugins/omd-onlyne

@@ -34,9 +34,10 @@ The last line links the host packages a plugin imports by bare name (including
 `@deepseek-ai/dsh-scope`, which DS-Bot's host half imports) into the three
 module roots: `plugins/`, `external-plugins/`, and the repository root. The
 Onlyne plugins `omd-onlyne`, `omd-compute`, and `omd-issue-runner` live under
-`plugins/` and are linked there as siblings. `@onlyne/lib` is not in this
-repository; the script links it from `ONLYNE_ROOT` (default
-`~/Documents/progs/onlyne`) when that checkout is present.
+`plugins/` and are linked there as siblings. `@onlyne/lib` is the published npm
+package `^3.2.0`; the script installs it from `plugins/npm-packages` into
+`plugins/node_modules`. Set `ONLYNE_ROOT` to a local Onlyne checkout to use
+`<ONLYNE_ROOT>/packages/lib` instead.
 
 ## Project Overview
 
@@ -374,7 +375,7 @@ patch 层是字面 `[]\n`——**空的、只有注释的 `cordis.patch.yml` 会
 
 **当前挂载的定制**（2026-10-22 起逐项加）：`omd-judgment`（判官，原生 System One 优先、chat 兜底）、`omd-read`（`read` 与 `read_image` 合成一个工具：路径选择器、内联图片、`skill://` 等资源 scheme；profile 里把 `tool-fs` 的 `read` 与 `readImage` 关掉）、`omd-ttsr`（流式规则中止与重试）、`dsh-motion-ui`（第三方：交互组件、HTML/SVG 图解、动效与 MP4 导出）。
 
-`omd-onlyne`、`omd-compute`、`omd-issue-runner` 在 `plugins/` 下，`private: true`，不进 npm，也不进 `profiles/omd` 的依赖清单。要用时按各包 `cordis.patch.yml` 的行挂到自己的 profile；`@onlyne/lib` 仍来自 Onlyne 检出，由 `ONLYNE_ROOT` 告诉 `link-host-runtime.mjs`。
+`omd-onlyne`、`omd-compute`、`omd-issue-runner` 在 `plugins/` 下，`private: true`，不进 npm，也不进 `profiles/omd` 的依赖清单。要用时按各包 `cordis.patch.yml` 的行挂到自己的 profile。`@onlyne/lib` 用 npm 上的 `^3.2.0`，由 `link-host-runtime.mjs` 从 `plugins/npm-packages` 装进 `plugins/node_modules`；要改用本机检出就设 `ONLYNE_ROOT`。
 
 **子代理后端只用 base 自带的 `spawn` 与 `fork`。** `@deepseek-ai/dsh-subagent-claude-code`、进程级 Codex 后端、ACP、dsh-sdk 一律不挂，也不写进任何 profile 或文档示例——模型调用的唯一出口是网关。子代理容量由 `subagent` entry 的 `Config` 决定：`maxActiveSubagents` 默认 8、`maxDepth` 默认 1，两个字段都是 volatile，patch 里可改、Plugins → Subagent 页面运行时可改；容量满时 dsh 直接拒绝（`ACTIVATION_LIMIT_REACHED`），不排队——要排队由我们自己的批处理工具负责。
 

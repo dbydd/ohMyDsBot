@@ -62,10 +62,10 @@ repository.
 
 They import each other, `omd-internal-paths`, and `omd-sandbox-vm` by package
 specifier. `node plugins/link-host-runtime.mjs` links those names into
-`plugins/node_modules`, together with the host runtime. `@onlyne/lib` is not in
-this repository: the same script links it from `$ONLYNE_ROOT/packages/lib` when
-an Onlyne checkout is present (`ONLYNE_ROOT` defaults to
-`~/Documents/progs/onlyne`). A missing checkout skips only that specifier.
+`plugins/node_modules`, together with the host runtime, and installs the
+published `@onlyne/lib@^3.2.0` from `plugins/npm-packages` into the same
+directory. Set `ONLYNE_ROOT` to a local Onlyne checkout to use
+`<ONLYNE_ROOT>/packages/lib` instead of the npm package.
 
 ```sh
 node plugins/link-host-runtime.mjs
@@ -103,7 +103,7 @@ node plugins/link-host-runtime.mjs                 # host packages from the inte
 node plugins/link-host-runtime.mjs --from-profile omd
 ```
 
-The second list matters for `omd-lsp-nav` and `omd-ast-edit`: they import `dsh-tool-lsp` / `dsh-tool-ast-grep` internals, which a *profile* installs rather than the shared layer. The in-tree list exists for the same reason: `omd-todo-driver` imports `omd-todo` and `omd-judge-context` by package name, and neither is a profile dependency. The Onlyne packages are on that list too: `omd-compute` and `omd-issue-runner` import `omd-onlyne`, `omd-internal-paths`, and `omd-sandbox-vm` by package specifier.
+The second list matters for `omd-lsp-nav` and `omd-ast-edit`: they import `dsh-tool-lsp` / `dsh-tool-ast-grep` internals, which a *profile* installs rather than the shared layer. The in-tree list exists for the same reason: `omd-todo-driver` imports `omd-todo` and `omd-judge-context` by package name, and neither is a profile dependency. The Onlyne packages are on that list too: `omd-compute` and `omd-issue-runner` import `omd-onlyne`, `omd-internal-paths`, and `omd-sandbox-vm` by package specifier. `@onlyne/lib` is not linked from a checkout; the same script installs `^3.2.0` from npm.
 
 `pnpm` 12 refuses an install with unapproved build scripts. `dsh-browser-tool` depends on `sharp`, so each profile that installs it needs the approval recorded once:
 
