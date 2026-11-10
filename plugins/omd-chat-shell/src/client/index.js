@@ -26,7 +26,7 @@
  */
 
 window.__ModuleLoader__.load({
-  id: 'omd-chat-shell',
+  id: '@dbydd/omd-chat-shell',
   factory: () => {
     var module = { exports: {} }
     var exports = module.exports

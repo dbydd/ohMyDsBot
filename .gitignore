@@ -5,6 +5,9 @@
 # Installed dependencies
 node_modules/
 
+# Desktop pack staging (scripts/pack-desktop.mjs). The artifact is not source.
+/build/
+
 .DS_Store
 
 # omp runtime state

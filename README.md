@@ -42,7 +42,8 @@ dsh --profile omd --no-open                              # Web UI 默认 http://
 | `docs/` | 设计说明与实施计划 |
 | `design/` | Quint / VDM-SL / LikeC4 形式化模型 |
 | `archived/` | Lean 验证实验与退役 profile（`archived/retired-profiles/`） |
-| `scripts/` | `path`（内部路径 CLI）等辅助脚本 |
+| `scripts/` | `path`（内部路径 CLI）、`pack-desktop.mjs`（桌面包） |
+| `profiles/omd-full/` | 日常桌面组合：钉死的 ds-bot + omd 插件。打包说明见 [docs/pack-desktop.md](docs/pack-desktop.md) |
 
 ## 开发
 

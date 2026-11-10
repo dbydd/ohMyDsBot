@@ -2,4 +2,4 @@
 # when this package enters a profile's bundle list; no manual profile row needed.
 - insert:
     - id: omd-hindsight
-      name: omd-hindsight
+      name: "@dbydd/omd-hindsight"

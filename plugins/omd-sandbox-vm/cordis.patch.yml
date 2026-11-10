@@ -2,4 +2,4 @@
 # watchable desktop.
 - insert:
     - id: omd-sandbox-vm
-      name: omd-sandbox-vm
+      name: "@dbydd/omd-sandbox-vm"

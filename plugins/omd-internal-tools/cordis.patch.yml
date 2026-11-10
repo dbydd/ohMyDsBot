@@ -2,4 +2,4 @@
 # omd-internal-paths so the path service exists at apply time.
 - insert:
     - id: omd-internal-tools
-      name: omd-internal-tools
+      name: "@dbydd/omd-internal-tools"

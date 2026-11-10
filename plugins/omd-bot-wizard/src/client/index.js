@@ -32,7 +32,7 @@
 // `instructions`, which is what it did before this package existed.
 
 window.__ModuleLoader__.load({
-  id: 'omd-bot-wizard',
+  id: '@dbydd/omd-bot-wizard',
   factory: (require) => {
     var module = { exports: {} }
     var exports = module.exports

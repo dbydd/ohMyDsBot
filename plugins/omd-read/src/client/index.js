@@ -34,7 +34,7 @@
  */
 
 window.__ModuleLoader__.load({
-  id: 'omd-read',
+  id: '@dbydd/omd-read',
   factory: (require) => {
     var module = { exports: {} }
     var exports = module.exports

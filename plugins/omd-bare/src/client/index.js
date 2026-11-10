@@ -5,7 +5,7 @@
 // frame itself. Everything else — conversation, composer, overlays, dialogs —
 // keeps rendering through the shipped slots; nothing is unmounted.
 window.__ModuleLoader__.load({
-  id: 'omd-bare',
+  id: '@dbydd/omd-bare',
   factory: (require) => {
     var module = { exports: {} }
     var exports = module.exports

@@ -24,7 +24,7 @@
 // model's own behaviour), and a source that arrives gets a protocol. A name
 // already served by another package is reported once and left alone.
 window.__ModuleLoader__.load({
-  id: 'omd-internal-paths',
+  id: '@dbydd/omd-internal-paths',
   factory: (require) => {
     var module = { exports: {} }
     var exports = module.exports

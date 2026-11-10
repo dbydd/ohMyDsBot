@@ -14,7 +14,7 @@
 // - Strict lifecycle teardown of timers, subscriptions, React roots, and DOM nodes.
 
 window.__ModuleLoader__.load({
-  id: 'omd-context-notes',
+  id: '@dbydd/omd-context-notes',
   factory: (require) => {
     var module = { exports: {} }
     var exports = module.exports

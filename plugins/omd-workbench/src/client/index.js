@@ -11,7 +11,7 @@
 // That keeps this module replaceable — a later workbench can take over the
 // title and tabs without touching the conversation.
 window.__ModuleLoader__.load({
-  id: 'omd-workbench',
+  id: '@dbydd/omd-workbench',
   factory: (require) => {
     var module = { exports: {} }
     var exports = module.exports

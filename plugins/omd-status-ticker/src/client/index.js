@@ -24,7 +24,7 @@
 // advances the elapsed time locally at one second so the clock does not follow
 // the poll period.
 window.__ModuleLoader__.load({
-  id: 'omd-status-ticker',
+  id: '@dbydd/omd-status-ticker',
   factory: (require) => {
     var module = { exports: {} }
     var exports = module.exports
