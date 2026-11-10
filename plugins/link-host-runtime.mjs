@@ -4,12 +4,12 @@
 // packages that a sibling imports by name are linked the same way, for the
 // same reason: a profile link resolves them from the importer's real path.
 //
-// The Onlyne integration suite is a tree of its own, outside this repository
-// (`<onlyne>/external-integrations/dsh-onlyne`), so its `node_modules` gets the
-// same treatment: host runtime, the in-tree siblings it imports, `@onlyne/lib`
-// from the Onlyne checkout, and its own packages. That is what lets the moved
-// packages name each other by package specifier and stay location-independent
-// when they are copied into `app.asar/node_modules`.
+// The Onlyne packages (`omd-onlyne`, `omd-compute`, `omd-issue-runner`) live
+// in this tree under `plugins/`. They import each other, and the siblings
+// `omd-internal-paths` and `omd-sandbox-vm`, by package specifier, so those
+// names are linked here too. `@onlyne/lib` is not in this repository: when
+// `ONLYNE_ROOT` points at an Onlyne checkout, its `packages/lib` is linked
+// as well. A missing checkout skips only that specifier.
 //
 // Why this exists
 // ---------------
@@ -81,13 +81,13 @@ const SIBLING_PACKAGES = [
 const pluginsRoot = dirname(fileURLToPath(import.meta.url))
 const repoRoot = dirname(pluginsRoot)
 
-/** The Onlyne checkout, whose `packages/lib` is `@onlyne/lib`. */
+/**
+ * An Onlyne checkout, whose `packages/lib` is `@onlyne/lib`. The plugins that
+ * bind it live in this repository; this path is only the library.
+ */
 const onlyneRoot = process.env.ONLYNE_ROOT ?? join(homedir(), 'Documents', 'progs', 'onlyne')
 
-/** The DSH integration suite, moved out of this repository. */
-const dshOnlyneRoot = join(onlyneRoot, 'external-integrations', 'dsh-onlyne')
-
-/** The packages that live inside `dsh-onlyne` and import each other by name. */
+/** In-tree Onlyne packages that import each other by package specifier. */
 const ONLYNE_PACKAGES = ['omd-onlyne', 'omd-compute', 'omd-issue-runner']
 
 /**
@@ -145,6 +145,7 @@ const trees = [
 			...runtimeLinks(),
 			...PROFILE_PACKAGES.map(name => [name, join(profileModules, name)]),
 			...SIBLING_PACKAGES.map(name => [name, join(pluginsRoot, name)]),
+			...ONLYNE_PACKAGES.map(name => [name, join(pluginsRoot, name)]),
 			['@onlyne/lib', join(onlyneRoot, 'packages', 'lib')],
 		],
 	},
@@ -154,17 +155,6 @@ const trees = [
 	...(existsSync(join(repoRoot, 'ds-bot'))
 		? [{ modules: join(repoRoot, 'node_modules'), packages: runtimeLinks() }]
 		: []),
-	...(existsSync(dshOnlyneRoot)
-		? [{
-			modules: join(dshOnlyneRoot, 'node_modules'),
-			packages: [
-				...runtimeLinks(),
-				...SIBLING_PACKAGES.map(name => [name, join(pluginsRoot, name)]),
-				['@onlyne/lib', join(onlyneRoot, 'packages', 'lib')],
-				...ONLYNE_PACKAGES.map(name => [name, join(dshOnlyneRoot, name)]),
-			],
-		}]
-		: []),
 ]
 
 if (!existsSync(layer)) {
@@ -173,8 +163,8 @@ if (!existsSync(layer)) {
   process.exit(1)
 }
 
-/** Specifiers that are absent because the checkout is not here, not because the link broke. */
-const optionalOnlyne = new Set(['@onlyne/lib', ...ONLYNE_PACKAGES])
+/** Absent only when no Onlyne checkout is available. The plugins themselves are in this tree. */
+const optionalOnlyne = new Set(['@onlyne/lib'])
 
 let failed = false
 for (const tree of trees) {
@@ -198,6 +188,6 @@ if (failed) process.exit(1)
 console.log(
 	`linked ${RUNTIME_PACKAGES.length} host package(s) from ${layer} into ${trees.length} tree(s), `
 	+ `${PROFILE_PACKAGES.length} profile package(s) from ${profileModules}, `
-	+ `${SIBLING_PACKAGES.length} in-tree sibling package(s), `
-	+ `and ${ONLYNE_PACKAGES.length} Onlyne package(s) from ${dshOnlyneRoot}`,
+	+ `${SIBLING_PACKAGES.length + ONLYNE_PACKAGES.length} in-tree sibling package(s), `
+	+ `and @onlyne/lib from ${join(onlyneRoot, 'packages', 'lib')} when that checkout is present`,
 )

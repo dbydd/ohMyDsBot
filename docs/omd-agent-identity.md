@@ -18,7 +18,7 @@ During the live DS-Bot demonstration on 2026-11-06, a Bot (`Chief` / `Ombra`) fi
 - **Transport Identity**: Underlying network/protocol addresses (`NodeId`, `SessionId`, `ThreadRef`) remain whatever the upstream protocol dictates (e.g., `urn:onlyne:agent:<sessionId>`). We **do not mandate a custom NodeId grammar** or inject fragile regex wrappers into the transport.
 - **Model-Facing Surface**: Agents, prompts, and UI components interact exclusively with semantic, hierarchy-aware internal paths (e.g., `onlyne://runner/issue/<id>`).
 - **Explicit Translation Table**: A single in-memory mapping table maintains `internal path ↔ resource identity`. No dual-writes, no legacy compatibility shims, no "historical baggage":
-  - `workers.set('onlyne://runner/issue/' + id, id)`
+  - `workers.set('onlyne://runner/issue/' + workerId, jobId)`
   - Resolution resolves via exact table lookup (`workers.get(path)`), keeping the protocol clean and the model cognitive load near zero.
 
 ### 2.2 Ownership Invariant: One VM per Agent
@@ -52,7 +52,7 @@ During the live DS-Bot demonstration on 2026-11-06, a Bot (`Chief` / `Ombra`) fi
 
 ## 4. Observed Facts Reference
 
-- `<onlyne>/external-integrations/dsh-onlyne/omd-issue-runner/src/jobs.ts:124`: Worker address formatting `onlyne://runner/issue/${job.id}`.
-- `<onlyne>/external-integrations/dsh-onlyne/omd-issue-runner/src/jobs.ts:334`: `byWorker` lookup using explicit translation map.
+- `plugins/omd-issue-runner/src/jobs.ts:187`: Worker address formatting `onlyne://runner/issue/${job.workerId}`.
+- `plugins/omd-issue-runner/src/jobs.ts:330`: `workers` map from that address to the job id; `byWorkerId` reads it at line 626 and `submit` writes it at line 781.
 - `plugins/omd-sandbox-vm/src/machine.ts:662`: `openDesktop` minting 60-second ephemeral password ticket.
 - `plugins/omd-context-tavern/src/client/index.js:2367`: Wrench Studio registration via `window.dshBot.registerDetailsTab`.

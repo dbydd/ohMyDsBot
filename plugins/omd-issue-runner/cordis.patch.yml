@@ -1,0 +1,5 @@
+# omd-issue-runner — an Onlyne participant that turns an issue into an isolated
+# worktree, a coding run and a PR answer.
+- insert:
+    - id: omd-issue-runner
+      name: omd-issue-runner

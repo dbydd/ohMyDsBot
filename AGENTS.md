@@ -32,7 +32,11 @@ node plugins/link-host-runtime.mjs
 
 The last line links the host packages a plugin imports by bare name (including
 `@deepseek-ai/dsh-scope`, which DS-Bot's host half imports) into the three
-module roots: `plugins/`, `external-plugins/`, and the repository root.
+module roots: `plugins/`, `external-plugins/`, and the repository root. The
+Onlyne plugins `omd-onlyne`, `omd-compute`, and `omd-issue-runner` live under
+`plugins/` and are linked there as siblings. `@onlyne/lib` is not in this
+repository; the script links it from `ONLYNE_ROOT` (default
+`~/Documents/progs/onlyne`) when that checkout is present.
 
 ## Project Overview
 
@@ -369,6 +373,8 @@ patch 层是字面 `[]\n`——**空的、只有注释的 `cordis.patch.yml` 会
 `omd-core` 与社区市场 `dsh-plugin` 已从 profile 的 bundles 中摘下。原先由 `omd-core` 挂载的自定义插件、社区工具和额外上游能力随之退出组合，`web` 恢复上游 provider 配置。`plugins/` 源码、原组合文件、已安装依赖及锁文件全部保留。以后按需要逐项挂载到 profile，避免一次恢复整套组合。fish 函数 `omd` 在 `~/.config/fish/functions/`，就是 `dsh --profile omd $argv`。插件用 `dsh plugin --profile omd add <pkg|path>` 装（内部转给 pnpm，声明了 `dsh.bundle` 的包会被自动追加进 bundles；没声明的只进 dependencies，要靠自己的 patch 行挂载）。
 
 **当前挂载的定制**（2026-10-22 起逐项加）：`omd-judgment`（判官，原生 System One 优先、chat 兜底）、`omd-read`（`read` 与 `read_image` 合成一个工具：路径选择器、内联图片、`skill://` 等资源 scheme；profile 里把 `tool-fs` 的 `read` 与 `readImage` 关掉）、`omd-ttsr`（流式规则中止与重试）、`dsh-motion-ui`（第三方：交互组件、HTML/SVG 图解、动效与 MP4 导出）。
+
+`omd-onlyne`、`omd-compute`、`omd-issue-runner` 在 `plugins/` 下，`private: true`，不进 npm，也不进 `profiles/omd` 的依赖清单。要用时按各包 `cordis.patch.yml` 的行挂到自己的 profile；`@onlyne/lib` 仍来自 Onlyne 检出，由 `ONLYNE_ROOT` 告诉 `link-host-runtime.mjs`。
 
 **子代理后端只用 base 自带的 `spawn` 与 `fork`。** `@deepseek-ai/dsh-subagent-claude-code`、进程级 Codex 后端、ACP、dsh-sdk 一律不挂，也不写进任何 profile 或文档示例——模型调用的唯一出口是网关。子代理容量由 `subagent` entry 的 `Config` 决定：`maxActiveSubagents` 默认 8、`maxDepth` 默认 1，两个字段都是 volatile，patch 里可改、Plugins → Subagent 页面运行时可改；容量满时 dsh 直接拒绝（`ACTIVATION_LIMIT_REACHED`），不排队——要排队由我们自己的批处理工具负责。
 

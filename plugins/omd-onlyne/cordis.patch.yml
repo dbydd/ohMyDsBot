@@ -1,0 +1,5 @@
+# omd-onlyne — one in-process Onlyne node per session, the msg tool and onlyne://.
+# Sits between the path service and the plugins that talk on the network.
+- insert:
+    - id: omd-onlyne
+      name: omd-onlyne
