@@ -1,6 +1,6 @@
 # Out-of-tree dsh plugins
 
-This directory holds our out-of-tree extensions, grouped by role so a package is not one more name in a flat list. Current development targets DS-Bot v0.2.7 on dsh 0.2.1-rc.5. The read-only application checkout lives at `../ds-bot/`; the dsh source under `../refs/deepseek-harness/` is an older rc.2 reference. Changes belong in local plugins and profile overlays.
+This directory holds our out-of-tree extensions, grouped by role so a package is not one more name in a flat list. Current development targets DS-Bot v0.3.2 (`88e0d60b`) on dsh 0.2.1-rc.5. The read-only application checkout lives at `../ds-bot/`; the dsh source under `../refs/deepseek-harness/` is an older rc.2 reference. Changes belong in local plugins and profile overlays.
 
 | directory | what lives there |
 |---|---|

@@ -1,4 +1,4 @@
-# omd-full：日常桌面组合。官方 dsh 包 + 钉在 95602e97 的 ds-bot + 本仓库的 omd 插件。
+# omd-full：日常桌面组合。官方 dsh 包 + 钉在 88e0d60b 的 ds-bot + 本仓库的 omd 插件。
 #
 # 行的 `name` 必须等于插件 package.json 的 `"name"`，也必须等于客户端
 # `__ModuleLoader__.load({ id })`。dsh 用这个名字当浏览器模块图的 id；三个对不上，
