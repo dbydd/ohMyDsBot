@@ -3,7 +3,8 @@
 ## Current development boundary
 
 Use DS-Bot as the application base and dsh 0.2.1-rc.5 as its runtime. `ds-bot/`
-is a read-only Git submodule pinned to upstream v0.2.7. It contains the DS-Bot
+is a read-only Git submodule pinned to `88e0d60b6f517b061a5f187b6bfc125924e1e280`
+(package 0.3.2, on upstream `main` `8e0013e`). It contains the DS-Bot
 plugin and desktop application; dsh is an npm dependency, not a source tree
 inside that submodule. `external-plugins/dsh-motion-ui/` is also read-only and
 is pinned to v0.8.9, which declares rc.5 compatibility.

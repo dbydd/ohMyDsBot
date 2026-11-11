@@ -2,7 +2,7 @@
 /**
  * Pack a desktop app that boots the omd-full stack on the pinned ds-bot.
  *
- * The Electron project is ds-bot/app (fork commit 95602e97). This script does
+ * The Electron project is ds-bot/app (fork commit 88e0d60b). This script does
  * not change that submodule. It copies the app, points it at this checkout's
  * plugins, and overlays profiles/omd-full so the window is not stock DS Bot.
  *
@@ -18,7 +18,7 @@ import { basename, dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 /** Fork commit the desktop host must be. Public npm ds-bot does not provide ctx.dsBot. */
-export const DS_BOT_PIN = '95602e97e8edbbf77e7840950daa0ebc69a612e9'
+export const DS_BOT_PIN = '88e0d60b6f517b061a5f187b6bfc125924e1e280'
 
 /** Display name of the packed app, distinct from an installed DS Bot. */
 export const PRODUCT_NAME = 'OMD'

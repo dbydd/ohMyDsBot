@@ -23,7 +23,8 @@ their notices are reproduced or pointed to as each one requires.
 ### DS-Bot
 
 - Source: <https://github.com/Fei2411/DS-Bot>
-- Version: `0.2.7`, commit `71d344bf193f3f18185f25de3d8e5c483046910a`
+- Version: `0.3.2`, submodule `88e0d60b6f517b061a5f187b6bfc125924e1e280`
+  (upstream `main` `8e0013e077eaeccc137327956e18425e73a5bb8c`)
 - License: Apache-2.0, preserved in `ds-bot/LICENSE`; upstream notices remain
   in `ds-bot/NOTICE`.
 - Relationship: application base, pinned as the read-only `ds-bot/` submodule.

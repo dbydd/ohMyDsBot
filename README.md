@@ -21,7 +21,7 @@ ohMyDsBot/
 ├── scripts/                 pack-desktop.mjs、publish-all.mjs、path
 ├── docs/                    设计说明。打包见 docs/pack-desktop.md
 ├── design/                  Quint / VDM-SL / LikeC4
-├── ds-bot/                  只读 submodule，钉在 95602e97（DS-Bot v0.2.7）
+├── ds-bot/                  只读 submodule，钉在 88e0d60b（DS-Bot v0.3.2）
 ├── external-plugins/        只读 submodule：dsh-motion-ui v0.8.9
 └── archived/                Lean 实验与退役 profile
 ```
