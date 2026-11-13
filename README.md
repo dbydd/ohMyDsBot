@@ -2,6 +2,8 @@
 
 dsh（[DS-Bot](https://github.com/dbydd/DS-Bot)）的树外插件套件、omd profile 组合，以及把这套组合打成桌面应用的脚本。定制写在插件和 profile 里；`ds-bot` 与 `dsh-motion-ui` 两个 submodule 保持只读。
 
+**注意，使用的是个人修改版dsbot**
+
 ## 先看哪里
 
 ```text
